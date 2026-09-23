@@ -1,0 +1,1 @@
+<div class="empty-state"><span class="soft-icon"><?= icon('search',26) ?></span><h1>Página não encontrada</h1><p>Esta página não faz parte do catálogo de demonstração.</p><a class="primary-button" href="<?= e(url('/')) ?>">Voltar ao início <?= icon('arrow',18) ?></a></div>
