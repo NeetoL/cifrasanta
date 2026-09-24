@@ -17,6 +17,6 @@ final class AutoDetectProvider implements ICifraProvider {
     public function normalizeUrl(string $url):string{return $this->policy->normalize($url);}
     public function extract(string $url):array {
         $response=$this->http->get($this->normalizeUrl($url),$this->policy);
-        return ['url_origem'=>$response['url'],'provider'=>$this->id(),'provider_nome'=>$this->name(),'aviso'=>$this->notice,...$this->parser->detect($response['html'],$this->importsContent)];
+        return ['url_origem'=>$response['url'],'provider'=>$this->id(),'provider_nome'=>$this->name(),'diagnostico'=>$response['diagnostico'],'aviso'=>$this->notice,...$this->parser->detect($response['html'],$this->importsContent)];
     }
 }

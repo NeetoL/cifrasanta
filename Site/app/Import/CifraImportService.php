@@ -24,6 +24,27 @@ final class CifraImportService {
         $this->duplicate($draft['url_origem']);
         return $draft;
     }
+    /**
+     * A fonte recusou o acesso (ex.: HTTP 403): rascunho vazio da mesma URL para o admin preencher à mão.
+     * Título e artista são só sugestões tiradas do endereço (".../artista/musica/") e ficam editáveis.
+     */
+    public function manualDraft(string $url,int $adminId,string $reason):array {
+        $this->requireAdmin($adminId);
+        $provider=$this->resolver->resolve($url);
+        $url=$provider->normalizeUrl($url);
+        $this->duplicate($url);
+        $segments=array_values(array_filter(explode('/',(string)parse_url($url,PHP_URL_PATH)),static fn($s)=>preg_match('/^[a-z0-9-]{2,120}$/',$s)===1 && preg_match('/[a-z]/',$s)===1));
+        $guess=static function(string $slug):string{
+            $words=explode(' ',str_replace('-',' ',$slug));
+            foreach($words as $i=>$word)$words[$i]=$i>0 && in_array($word,['a','o','as','os','e','de','da','do','das','dos','em','na','no','pela','pelo','para','com'],true)?$word:mb_convert_case($word,MB_CASE_TITLE,'UTF-8');
+            return implode(' ',$words);
+        };
+        $count=count($segments);
+        return ['url_origem'=>$url,'provider'=>$provider->id(),'provider_nome'=>$provider->name(),
+            'titulo'=>$count>=1?$guess($segments[$count-1]):'','artista'=>$count>=2?$guess($segments[$count-2]):'',
+            'tom'=>'','capotraste'=>'','afinacao'=>'','conteudo'=>'','formato'=>'inline','categoria'=>'','publicada'=>'',
+            'aviso'=>$reason.' Título e artista foram sugeridos pelo endereço: confira, informe o tom e cole a cifra de uma fonte própria ou autorizada em "Editar".'];
+    }
     private const LABELS=['titulo'=>'Música','artista'=>'Artista','categoria'=>'Momento','tom'=>'Tom','capotraste'=>'Capotraste','afinacao'=>'Afinação'];
     public function prepare(array $draft,array $input,int $adminId):array {
         $this->requireAdmin($adminId);

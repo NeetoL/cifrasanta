@@ -43,35 +43,7 @@
     if (box.classList.contains('is-ok')) setTimeout(function () { box.classList.add('is-gone'); }, 9000);
   });
 
-  /* ---------- Biblioteca: busca e filtro ---------- */
-  var search = $('#song-search');
-  var rows = $all('.song[data-id]');
-  if (rows.length) {
-    rows.forEach(function (row) {
-      row.q = plain([row.getAttribute('data-title'), row.getAttribute('data-artist'), row.getAttribute('data-cat')].join(' '));
-    });
-    var mode = 'all';
-    var empty = $('#song-empty');
-    var apply = function () {
-      var q = plain(search ? search.value : '').trim();
-      var shown = 0;
-      rows.forEach(function (row) {
-        var ok = (mode === 'all' || row.getAttribute('data-status') === mode) &&
-                 (q === '' || row.q.indexOf(q) !== -1);
-        row.hidden = !ok;
-        if (ok) shown++;
-      });
-      if (empty) empty.classList.toggle('is-shown', shown === 0);
-    };
-    if (search) search.addEventListener('input', apply);
-    $all('[data-filter]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        mode = btn.getAttribute('data-filter');
-        $all('[data-filter]').forEach(function (b) { b.classList.toggle('is-on', b === btn); b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'); });
-        apply();
-      });
-    });
-  }
+  /* Biblioteca: busca, filtro e paginação são feitos no servidor (admin.php, GET q/status/p). */
 
   /* ---------- Cifra: interpretação e prévia ---------- */
   var CHORD = /^[A-G](?:#|b)?(?:(?:maj|min|dim|aug|sus|add|m|M)|[0-9#b()+°º-])*(?:\/[A-G](?:#|b)?)?$/;
@@ -162,10 +134,17 @@
   var availBox = $('#pick-avail');
   var selBox = $('#pick-sel');
   if (ids && availBox && selBox) {
+    // Todas as músicas (só id/título/artista/rascunho) vêm de #pick-data, da mais recente para a mais antiga,
+    // para que a sequência de um repertório nunca perca músicas que não estão na página atual da biblioteca.
     var songs = {};
+    var recent = [];
     var order = [];
-    $all('.song[data-id]').forEach(function (row) {
-      songs[row.getAttribute('data-id')] = { id: row.getAttribute('data-id'), title: row.getAttribute('data-title'), artist: row.getAttribute('data-artist'), draft: row.getAttribute('data-status') === 'draft' };
+    var PICK_LIMIT = 100;
+    var data = [];
+    try { data = JSON.parse(($('#pick-data') || {}).textContent || '[]'); } catch (e) { data = []; }
+    data.forEach(function (item) {
+      songs[item[0]] = { id: item[0], title: item[1], artist: item[2], draft: item[3] };
+      recent.push(item[0]);
     });
     (ids.value || '').split(',').forEach(function (part) {
       var id = part.trim();
@@ -191,8 +170,10 @@
       while (availBox.firstChild) availBox.removeChild(availBox.firstChild);
       while (selBox.firstChild) selBox.removeChild(selBox.firstChild);
       var count = 0;
-      Object.keys(songs).forEach(function (id) {
+      // Sem busca: as 100 mais recentes; com busca: até 100 resultados.
+      recent.forEach(function (id) {
         var s = songs[id];
+        if (count >= PICK_LIMIT) return;
         if (order.indexOf(id) !== -1) return;
         if (q && plain(s.title + ' ' + s.artist).indexOf(q) === -1) return;
         var li = el('li', 'pick');

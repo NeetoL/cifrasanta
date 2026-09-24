@@ -4,6 +4,7 @@ require dirname(__DIR__).'/app/server.php';
 use CifraSanta\Core\Database;
 use CifraSanta\Core\Service;
 use CifraSanta\Import\CifraImportService;
+use CifraSanta\Import\CifraClubParser;
 use CifraSanta\Import\ICifraProvider;
 use CifraSanta\Import\UrlPolicy;
 use CifraSanta\Import\ProviderResolver;
@@ -38,6 +39,29 @@ try {
  deniedImport(fn()=>$import->save($prepared,$users[0]),409);
  $prepared['url_origem']='https://owned.example.org/another/';deniedImport(fn()=>$import->save($prepared,$users[0]),409);
  expectImport((int)$service->query('SELECT COUNT(*) FROM cifra_santa_musica WHERE criado_por=?',[$users[0]])->fetchColumn()===1,'duplicatas não criam registros');
+ // Fonte bloqueada (HTTP 403): rascunho manual da mesma URL, com sugestões do endereço e sem conteúdo.
+ $manualUrl='https://owned.example.org/comunidade-gerados-pela-imaculada/odres-novos-'.bin2hex(random_bytes(3)).'/';
+ $manual=$import->manualDraft($manualUrl,$users[0],'O servidor respondeu HTTP 403.');
+ expectImport($manual['url_origem']===$manualUrl && $manual['provider']===$provider->id() && $manual['conteudo']==='' && $manual['tom']==='','rascunho manual sem conteúdo');
+ expectImport(str_starts_with($manual['titulo'],'Odres Novos ') && $manual['artista']==='Comunidade Gerados pela Imaculada','sugestão de título e artista pelo endereço');
+ expectImport(str_contains($manual['aviso'],'HTTP 403') && $provider->calls===1,'motivo real no aviso e nenhum download extra');
+ deniedImport(fn()=>$import->manualDraft($manualUrl,$users[1],'x'),403);
+ deniedImport(fn()=>$import->manualDraft('https://127.0.0.1/a/',$users[0],'x'),422);
+ deniedImport(fn()=>$import->prepare($manual,$manual,$users[0]),422);
+ $filled=$import->prepare($manual,[...$manual,'categoria'=>'Entrada','tom'=>'Bm','conteudo'=>"[Bm]Letra própria de [G]teste"],$users[0]);
+ $manualId=$import->save($filled,$users[0]);
+ expectImport((string)$service->query('SELECT i.url_origem FROM cifra_santa_importacao i WHERE i.musica_id=?',[$manualId])->fetchColumn()===$manualUrl,'cadastro manual salvo com a URL de origem');
+ deniedImport(fn()=>$import->manualDraft($manualUrl,$users[0],'x'),409);
+ // Saída do CifraClubParser (fixture com letra inventada) → prévia → gravação, sem perder alinhamento.
+ $parsed=(new CifraClubParser())->parse(file_get_contents(__DIR__.'/fixtures/cifraclub-estrutura.html'));
+ $chartDraft=['provider'=>$provider->id(),'url_origem'=>'https://owned.example.org/cc-'.bin2hex(random_bytes(6)).'/','categoria'=>'Louvor',...array_intersect_key($parsed,array_flip(['titulo','artista','tom','capotraste','afinacao','conteudo','formato']))];
+ $chartDraft['titulo'].=' '.bin2hex(random_bytes(4));
+ $chartData=$import->prepare($chartDraft,$chartDraft,$users[0]);
+ expectImport($chartData['conteudo']===$parsed['conteudo'] && $chartData['tom']==='Bm' && $chartData['capotraste']==='5ª casa' && $chartData['afinacao']==='Padrão','prévia mantém cifra e metadados do parser');
+ $chartId=$import->save($chartData,$users[0]);
+ $stored=$service->query('SELECT c.conteudo,c.tom,i.capotraste,i.afinacao FROM cifra_santa_cifra c JOIN cifra_santa_importacao i ON i.musica_id=c.musica_id WHERE c.musica_id=?',[$chartId])->fetch();
+ expectImport($stored['conteudo']===$parsed['conteudo'] && $stored['tom']==='Bm' && $stored['capotraste']==='5ª casa' && $stored['afinacao']==='Padrão','cifra do parser persistida byte a byte');
+ expectImport(str_contains($stored['conteudo'],'E|-----0--0---2') && str_contains($stored['conteudo'],'[Refrão]'),'tablatura e seções persistidas');
  echo "$checks verificações de autorização, prévia e persistência passaram.\n";
 }finally{
  foreach($users as $id){$service->query('DELETE FROM cifra_santa_musica WHERE criado_por=?',[$id]);$service->query('DELETE FROM cifra_santa_usuario WHERE id=?',[$id]);foreach(['import-identify:','import-save:'] as $scope)$service->query('DELETE FROM cifra_santa_limite_acesso WHERE chave=?',[hash('sha256',$scope.$id)]);}

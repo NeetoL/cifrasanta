@@ -5,7 +5,7 @@ use CifraSanta\Core\Database;
 use CifraSanta\Core\Service;
 require __DIR__ . '/app/Views/admin/kit.php';
 
-header("Content-Security-Policy: default-src 'none'; style-src 'self'; script-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
+header("Content-Security-Policy: default-src 'none'; img-src 'self'; style-src 'self'; script-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
 if (!secure_transport()) { http_response_code(403); exit('Acesse o painel por HTTPS.'); }
 start_admin_session();
 $message = '';
@@ -13,6 +13,15 @@ $isError = false;
 $user = null;
 $needsSetup = false;
 $songs = $repertoires = [];
+const SONG_LIST_LIMIT = 100;
+const SONG_PAGE_SIZE = 10;
+$songQuery = is_string($_GET['q'] ?? null) ? mb_substr(trim($_GET['q']), 0, 100) : '';
+$songStatus = in_array($_GET['status'] ?? '', ['pub', 'draft'], true) ? $_GET['status'] : 'all';
+$songPage = ctype_digit((string) ($_GET['p'] ?? '')) ? max(1, (int) $_GET['p']) : 1;
+$songMatches = $songShown = 0;
+$songPages = 1;
+$totals = ['total' => 0, 'publicadas' => 0];
+$pickSongs = [];
 $edit = $editRepertoire = [];
 try {
     $db = Database::connection();
@@ -66,9 +75,26 @@ try {
         exit;
     }
     if ($user) {
-        $songs = $service->query('SELECT m.*, c.tom, c.conteudo, c.publicada FROM cifra_santa_musica m JOIN cifra_santa_cifra c ON c.musica_id = m.id ORDER BY m.titulo')->fetchAll();
+        $totals = $service->query('SELECT COUNT(*) total, COALESCE(SUM(c.publicada = 1), 0) publicadas FROM cifra_santa_musica m JOIN cifra_santa_cifra c ON c.musica_id = m.id')->fetch();
+        // Biblioteca: busca e filtro no banco; no máximo as 100 mais recentes (ou 100 resultados), 10 por página.
+        $where = [];
+        $params = [];
+        if ($songQuery !== '') {
+            $like = '%' . addcslashes($songQuery, '\\%_') . '%';
+            $where[] = '(m.titulo LIKE ? OR m.artista LIKE ? OR m.categoria LIKE ?)';
+            array_push($params, $like, $like, $like);
+        }
+        if ($songStatus !== 'all') $where[] = 'c.publicada = ' . ($songStatus === 'pub' ? '1' : '0');
+        $from = 'FROM cifra_santa_musica m JOIN cifra_santa_cifra c ON c.musica_id = m.id' . ($where ? ' WHERE ' . implode(' AND ', $where) : '');
+        $songMatches = (int) $service->query("SELECT COUNT(*) $from", $params)->fetchColumn();
+        $songShown = min($songMatches, SONG_LIST_LIMIT);
+        $songPages = max(1, (int) ceil($songShown / SONG_PAGE_SIZE));
+        $songPage = min($songPage, $songPages);
+        $songs = $service->query('SELECT m.id, m.titulo, m.artista, m.categoria, c.tom, c.publicada ' . $from . ' ORDER BY m.id DESC LIMIT ' . SONG_PAGE_SIZE . ' OFFSET ' . (($songPage - 1) * SONG_PAGE_SIZE), $params)->fetchAll();
+        // Montador de repertório: só id/título/artista/situação (sem cifras), para resolver qualquer música da sequência.
+        $pickSongs = $service->query('SELECT m.id, m.titulo, m.artista, c.publicada FROM cifra_santa_musica m JOIN cifra_santa_cifra c ON c.musica_id = m.id ORDER BY m.id DESC')->fetchAll();
         $repertoires = $service->query('SELECT * FROM cifra_santa_repertorio ORDER BY id DESC')->fetchAll();
-        foreach ($songs as $song) if ((string) $song['id'] === ($_GET['song'] ?? '')) $edit = $song;
+        if (ctype_digit((string) ($_GET['song'] ?? ''))) $edit = $service->query('SELECT m.*, c.tom, c.conteudo, c.publicada FROM cifra_santa_musica m JOIN cifra_santa_cifra c ON c.musica_id = m.id WHERE m.id = ?', [(int) $_GET['song']])->fetch() ?: [];
         foreach ($repertoires as $item) if ((string) $item['id'] === ($_GET['repertoire'] ?? '')) {
             $editRepertoire = $item;
             $editRepertoire['musicas'] = implode(', ', $service->query('SELECT musica_id FROM cifra_santa_repertorio_musica WHERE repertorio_id = ? ORDER BY posicao', [$item['id']])->fetchAll(PDO::FETCH_COLUMN));
@@ -93,8 +119,7 @@ if (!$user):
     adm_page_start(['title' => 'Cifra Santa · Painel administrativo', 'user' => null]);
     ?>
 <div class="auth-brand">
-  <?= adm_mark(68) ?>
-  <h1>Cifra Santa</h1>
+  <h1 class="auth-logo"><?= adm_logo(200) ?></h1>
   <p><?= $needsSetup ? 'Vamos preparar o seu painel.' : 'Seu acervo, em harmonia.' ?></p>
 </div>
 <?php adm_notice($message, $isError); ?>
@@ -117,8 +142,14 @@ if (!$user):
     return;
 endif;
 
-$published = count(array_filter($songs, static fn(array $song): bool => !empty($song['publicada'])));
-$drafts = count($songs) - $published;
+$totalSongs = (int) $totals['total'];
+$published = (int) $totals['publicadas'];
+$drafts = $totalSongs - $published;
+/** Link da biblioteca mantendo busca, filtro e página. */
+$songLink = static function (array $change = []) use ($songQuery, $songStatus, $songPage): string {
+    $params = array_filter(['q' => $songQuery, 'status' => $songStatus === 'all' ? '' : $songStatus, 'p' => $songPage > 1 ? $songPage : '', ...$change], static fn($v) => $v !== '' && $v !== null);
+    return 'admin.php' . ($params ? '?' . http_build_query($params) : '');
+};
 $publishedRepertoires = count(array_filter($repertoires, static fn(array $item): bool => !empty($item['publicado'])));
 $firstName = explode(' ', trim((string) $user['nome']))[0] ?: 'administrador';
 $editingSong = !empty($edit['id']);
@@ -129,7 +160,7 @@ adm_page_start([
     'user' => $user,
     'active' => 'biblioteca',
     'crumb' => 'Biblioteca',
-    'counts' => ['musicas' => count($songs), 'repertorios' => count($repertoires)],
+    'counts' => ['musicas' => $totalSongs, 'repertorios' => count($repertoires)],
 ]);
 ?>
 <div class="page-head">
@@ -147,37 +178,53 @@ adm_page_start([
 <?php adm_notice($message, $isError); ?>
 
 <div class="stats" aria-label="Resumo do acervo">
-  <div class="card stat"><span class="stat-ico"><?= adm_icon('music', 20) ?></span><div><strong><?= count($songs) ?></strong><span class="label">Músicas no acervo</span></div></div>
+  <div class="card stat"><span class="stat-ico"><?= adm_icon('music', 20) ?></span><div><strong><?= $totalSongs ?></strong><span class="label">Músicas no acervo</span></div></div>
   <div class="card stat is-gold"><span class="stat-ico"><?= adm_icon('check', 20) ?></span><div><strong><?= $published ?></strong><span class="label">Publicadas no app</span></div></div>
   <div class="card stat"><span class="stat-ico"><?= adm_icon('file', 20) ?></span><div><strong><?= $drafts ?></strong><span class="label">Rascunhos</span></div></div>
   <div class="card stat"><span class="stat-ico"><?= adm_icon('book', 20) ?></span><div><strong><?= count($repertoires) ?></strong><span class="label">Repertórios (<?= $publishedRepertoires ?> publicados)</span></div></div>
 </div>
 
 <section class="block" id="musicas">
-  <?php adm_section_head('BIBLIOTECA', 'Músicas e cifras', 'Toque em Editar para abrir a cifra no editor. Rascunhos ficam ocultos no aplicativo.'); ?>
+  <?php adm_section_head('BIBLIOTECA', 'Músicas e cifras', $songQuery === '' ? 'As ' . SONG_LIST_LIMIT . ' músicas adicionadas mais recentemente. Busque para encontrar qualquer outra do acervo. Rascunhos ficam ocultos no aplicativo.' : 'Resultados da busca em todo o acervo (até ' . SONG_LIST_LIMIT . ', das mais recentes para as mais antigas).'); ?>
   <div class="card">
-    <div class="toolbar">
-      <label class="search"><?= adm_icon('search', 17) ?><input id="song-search" type="text" placeholder="Buscar por música, artista ou momento…" autocomplete="off" aria-label="Buscar músicas"></label>
+    <form method="get" action="admin.php#musicas" class="toolbar" role="search">
+      <label class="search"><?= adm_icon('search', 17) ?><input id="song-search" name="q" type="search" maxlength="100" value="<?= escape($songQuery) ?>" placeholder="Buscar por música, artista ou momento… (Enter)" autocomplete="off" aria-label="Buscar músicas"><?php if ($songQuery !== ''): ?><a class="search-clear" href="<?= escape($songLink(['q' => '', 'p' => ''])) ?>#musicas" aria-label="Limpar busca">×</a><?php endif; ?></label>
       <div class="seg" role="group" aria-label="Filtrar por situação">
-        <button type="button" class="is-on" data-filter="all" aria-pressed="true">Todas</button>
-        <button type="button" data-filter="pub" aria-pressed="false">Publicadas</button>
-        <button type="button" data-filter="draft" aria-pressed="false">Rascunhos</button>
+        <?php foreach (['all' => 'Todas', 'pub' => 'Publicadas', 'draft' => 'Rascunhos'] as $value => $label): ?>
+        <button type="submit" name="status" value="<?= $value ?>" class="<?= $songStatus === $value ? 'is-on' : '' ?>" aria-pressed="<?= $songStatus === $value ? 'true' : 'false' ?>"><?= $label ?></button>
+        <?php endforeach; ?>
       </div>
-    </div>
+    </form>
     <?php if ($songs): ?>
     <ul class="songs">
-      <?php foreach ($songs as $index => $song): $isPub = !empty($song['publicada']); ?>
-      <li class="song<?= (string) $song['id'] === (string) ($edit['id'] ?? '') ? ' is-editing' : '' ?>" data-id="<?= escape($song['id']) ?>" data-title="<?= escape($song['titulo']) ?>" data-artist="<?= escape($song['artista']) ?>" data-cat="<?= escape($song['categoria'] ?? '') ?>" data-status="<?= $isPub ? 'pub' : 'draft' ?>">
+      <?php foreach ($songs as $song): $isPub = !empty($song['publicada']); ?>
+      <li class="song<?= (string) $song['id'] === (string) ($edit['id'] ?? '') ? ' is-editing' : '' ?>" data-id="<?= escape($song['id']) ?>">
         <span class="idx"><?= escape($song['id']) ?></span>
         <div class="t"><strong><?= escape($song['titulo']) ?></strong><span><?= escape($song['artista'] !== '' ? $song['artista'] : 'Artista não informado') ?></span></div>
         <?php if (!empty($song['categoria'])): ?><span class="tag"><?= escape($song['categoria']) ?></span><?php else: ?><span></span><?php endif; ?>
         <?php if (!empty($song['tom'])): ?><span class="tag tom" title="Tom original"><?= escape($song['tom']) ?></span><?php else: ?><span></span><?php endif; ?>
         <span class="pill <?= $isPub ? 'is-pub' : 'is-draft' ?>"><?= $isPub ? 'Publicada' : 'Rascunho' ?></span>
-        <a class="btn btn-ghost btn-sm edit" href="?song=<?= escape($song['id']) ?>#editor"><?= adm_icon('edit', 15) ?><span>Editar</span></a>
+        <a class="btn btn-ghost btn-sm edit" href="<?= escape($songLink(['song' => $song['id']])) ?>#editor"><?= adm_icon('edit', 15) ?><span>Editar</span></a>
       </li>
       <?php endforeach; ?>
     </ul>
-    <p class="list-empty" id="song-empty">Nenhuma música encontrada com esse filtro.</p>
+    <nav class="pager" aria-label="Páginas da biblioteca">
+      <span class="pager-info">
+        <?= ($songPage - 1) * SONG_PAGE_SIZE + 1 ?>–<?= ($songPage - 1) * SONG_PAGE_SIZE + count($songs) ?> de <?= $songShown ?>
+        <?php if ($songMatches > $songShown): ?> <em>· <?= $songMatches ?> no total; refine a busca para ver as demais</em><?php endif; ?>
+      </span>
+      <?php if ($songPages > 1): ?>
+      <span class="pager-links">
+        <?php if ($songPage > 1): ?><a class="btn btn-ghost btn-sm" href="<?= escape($songLink(['p' => $songPage - 1 > 1 ? $songPage - 1 : ''])) ?>#musicas" rel="prev">‹ Anterior</a><?php endif; ?>
+        <?php for ($page = 1; $page <= $songPages; $page++): ?>
+        <?php if ($page === $songPage): ?><span class="pager-num is-on" aria-current="page"><?= $page ?></span><?php else: ?><a class="pager-num" href="<?= escape($songLink(['p' => $page > 1 ? $page : ''])) ?>#musicas"><?= $page ?></a><?php endif; ?>
+        <?php endfor; ?>
+        <?php if ($songPage < $songPages): ?><a class="btn btn-ghost btn-sm" href="<?= escape($songLink(['p' => $songPage + 1])) ?>#musicas" rel="next">Próxima ›</a><?php endif; ?>
+      </span>
+      <?php endif; ?>
+    </nav>
+    <?php elseif ($totalSongs > 0): ?>
+    <p class="list-empty is-shown">Nenhuma música encontrada<?= $songQuery !== '' ? ' para “' . escape($songQuery) . '”' : '' ?><?= $songStatus !== 'all' ? ' com esse filtro' : '' ?>.</p>
     <?php else: ?>
     <div class="empty-state">
       <span class="stat-ico"><?= adm_icon('music', 26) ?></span>
@@ -234,7 +281,8 @@ adm_page_start([
       </div>
       <div class="field js-only">
         <span class="lbl">Ou monte pela lista <em>· <span id="pick-total">0</span> selecionadas</em></span>
-        <label class="search"><?= adm_icon('search', 16) ?><input id="pick-search" type="text" placeholder="Filtrar músicas…" autocomplete="off" aria-label="Filtrar músicas do repertório"></label>
+        <label class="search"><?= adm_icon('search', 16) ?><input id="pick-search" type="text" placeholder="Buscar música para adicionar…" autocomplete="off" aria-label="Buscar músicas para o repertório"></label>
+        <script type="application/json" id="pick-data"><?= json_encode(array_map(static fn(array $s): array => [(string) $s['id'], $s['titulo'], $s['artista'], empty($s['publicada'])], $pickSongs), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
         <div class="picker">
           <div class="picker-col"><header><span>DISPONÍVEIS</span></header><ul id="pick-avail"></ul></div>
           <div class="picker-col"><header><span>SEQUÊNCIA</span></header><ol id="pick-sel"></ol></div>

@@ -22,6 +22,8 @@ class AboutScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const SizedBox(height: 24),
+              const Center(child: BrandLogo(size: 220)),
               const PageHeading(
                 kicker: 'CIFRA SANTA',
                 title: 'Sobre.',

@@ -25,7 +25,11 @@ Envie **a pasta `cifrasanta` inteira**, inclusive `.htaccess`, `config/database.
 
 ### Importar cifra por URL
 
-No painel, **Importar cifra** pede só a URL. O `ProviderResolver` escolhe o provedor pelo domínio: sites com leitura dedicada em `config/import-providers.php` (opcional, mantido pelo desenvolvedor); catálogos de terceiros (`ProviderResolver::REFERENCE_ONLY`, como o Cifra Club), dos quais vêm só título, artista, tom, afinação e capotraste, sem letra nem cifra; e qualquer outro site, com detecção automática completa (`HtmlChartParser::detect`). Nada é gravado antes de o administrador conferir a prévia, escolher o momento e confirmar que o conteúdo é próprio ou autorizado.
+No painel, **Importar cifra** pede só a URL. O `ProviderResolver` escolhe o provedor pelo domínio: sites com leitura dedicada em `config/import-providers.php` (opcional, mantido pelo desenvolvedor); o Cifra Club, com provedor próprio; outros catálogos de terceiros (`ProviderResolver::REFERENCE_ONLY`), dos quais vêm só título, artista, tom, afinação e capotraste, sem letra nem cifra; e qualquer outro site, com detecção automática completa (`HtmlChartParser::detect`). Nada é gravado antes de o administrador conferir a prévia, escolher o momento e confirmar que o conteúdo é próprio ou autorizado.
+
+**Cifra Club.** `CifraClubProvider` faz o GET HTTPS (sem JavaScript, sem navegador) e `CifraClubParser` interpreta o HTML com DOM: JSON-LD, `og:title`, atributos `id`/`data-anchor`/`data-chord-name`/`data-tuning` e rótulos visíveis, cada campo com fallback; as classes CSS do site (hashes de build) não são usadas. A cifra sai no formato `[C]palavra` com colunas, linhas em branco, seções e tablaturas preservadas. A letra e a cifra têm direitos autorais: por padrão só os dados da música são importados. Para importar o conteúdo de uma fonte com autorização, o desenvolvedor registra a referência em `config/import-providers.php`: `'cifraclub' => ['authorization' => '...']`.
+
+**Diagnóstico.** Cada tentativa mostra no painel (em "Diagnóstico técnico") e grava no log do PHP: URL solicitada e final, redirects, status HTTP, Content-Type, bytes, tempo, IP, erro de DNS/TLS/timeout/rede e qual estratégia do parser encontrou cada campo. Erros do servidor remoto aparecem com o status real (ex.: `HTTP 403`), sem mensagem genérica, e com um trecho do texto da resposta (onde fica, por exemplo, o "Reference #" de um bloqueio da Akamai). Se a fonte negar o acesso (401, 403, 429 ou 451), o bloqueio não é contornado: a tela abre a revisão da mesma URL para cadastro manual, com título e artista sugeridos pelo endereço.
 
 A antiga tela "Fontes autorizadas" foi removida: `admin-fontes.php` agora só redireciona. Na hospedagem, apague `app/Import/SourceStore.php` e `app/Import/ProviderRegistry.php` se ainda existirem (o `stage.ps1` copia arquivos, mas não remove). A tabela `cifra_santa_importacao_fonte` deixou de ser usada e pode ser descartada.
 
@@ -67,5 +71,7 @@ php Site/tests/integration.php --allow-configured-database
 ```
 
 O teste cria contas e conteúdo identificados por sufixo aleatório nas tabelas configuradas e os remove ao final, inclusive em caso de falha. Valida autenticação, autorização, CSRF, publicações, rascunhos, favoritos isolados e revogação. Não execute contra um banco diferente sem revisar sua configuração.
+
+Testes da importação: `php Site/tests/import-cifraclub.php` (parser Cifra Club offline, HTML → DTO; `CIFRACLUB_SAMPLE=/caminho/pagina.html` valida também uma página salva localmente, fora do Git) e `php Site/tests/import-parser.php [--network]`. Os testes `import-service.php` e `import-http.php` gravam no banco configurado; use `DATABASE_DSN_PROD`/`DATABASE_USER_PROD`/`DATABASE_PASS_PROD` para apontá-los a um banco local e `TEST_BASE_URL` para o servidor. Com o servidor iniciado com `CIFRA_IMPORT_PROVIDER_CONFIG=Site/tests/import-providers-blocked.fixture.php`, `TEST_BLOCKED_URL=https://httpbin.org/status/403` testa também o fluxo de bloqueio.
 
 Veja `API.md` para o contrato completo e a estrutura das tabelas. Os arquivos MVC anteriores em `app/Views` e `app/Models` não são usados nem publicados por esta API/painel.

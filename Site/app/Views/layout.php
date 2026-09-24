@@ -7,7 +7,7 @@
     <meta name="csrf-token" content="<?= e(csrf_token()) ?>">
     <meta name="app-base" content="<?= e(base_path()) ?>">
     <title><?= e($title ?? 'Cifra Santa') ?></title>
-    <link rel="icon" type="image/svg+xml" href="<?= e(asset('favicon.svg')) ?>">
+    <link rel="icon" type="image/png" href="<?= e(asset('favicon.png')) ?>">
     <link rel="stylesheet" href="<?= e(asset('app.css')) ?>">
 </head>
 <body>

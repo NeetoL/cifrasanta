@@ -2,6 +2,9 @@
 // Copie para import-providers.php. Configure somente fontes com autorização de importação.
 // Seletores são XPath 1.0, executados apenas no DOM recebido, nunca como código.
 return [
+ // Cifra Club: provedor e parser fixos no código (CifraClubProvider/CifraClubParser). Sem esta entrada, só os dados
+ // da música são importados. Preencha apenas com a referência de uma autorização real para copiar letra e cifra.
+ // 'cifraclub'=>['authorization'=>''],
  'meu-site'=>[
   'enabled'=>false,
   'name'=>'Meu site autorizado',

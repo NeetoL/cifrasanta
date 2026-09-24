@@ -175,6 +175,47 @@ ThemeData cifraTheme([SaintPalette palette = SaintPalette.dark]) {
   );
 }
 
+bool _isDark(BuildContext context) =>
+    Theme.of(context).brightness == Brightness.dark;
+
+/// Símbolo oficial (cruz, Cristo e violão), sem fundo; no tema escuro usa a versão com marrons clareados.
+class BrandMark extends StatelessWidget {
+  const BrandMark({super.key, this.size = 40});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) => Image.asset(
+    _isDark(context)
+        ? 'assets/brand/cifra-santa-mark-dark.png'
+        : 'assets/brand/cifra-santa-mark.png',
+    width: size,
+    height: size,
+    fit: BoxFit.contain,
+    filterQuality: FilterQuality.medium,
+    semanticLabel: 'Cifra Santa',
+  );
+}
+
+/// Logo completa (símbolo + "CIFRA SANTA"), sem fundo, com versão para tema escuro.
+class BrandLogo extends StatelessWidget {
+  const BrandLogo({super.key, this.size = 220});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) => Image.asset(
+    _isDark(context)
+        ? 'assets/brand/cifra-santa-logo-dark.png'
+        : 'assets/brand/cifra-santa-logo.png',
+    width: size,
+    height: size,
+    fit: BoxFit.contain,
+    filterQuality: FilterQuality.medium,
+    semanticLabel: 'Logo Cifra Santa',
+  );
+}
+
 enum SacredSymbol { mark, church, chalice, dove, path, book }
 
 class SacredGlyph extends StatelessWidget {

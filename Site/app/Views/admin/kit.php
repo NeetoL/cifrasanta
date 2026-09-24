@@ -35,9 +35,20 @@ function adm_icon(string $name, int $size = 18): string {
     return '<svg class="ico" width="' . $size . '" height="' . $size . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' . $body . '</svg>';
 }
 
-/** Marca do aplicativo (mesmo desenho do ícone: arco, cruz e nota em dourado). */
+/** Imagem da marca sem fundo, nas versões para tema claro e escuro; o CSS mostra a do tema ativo. */
+function adm_brand_img(string $file, string $class, int $size, string $alt): string {
+    $img = static fn(string $src, string $theme): string => '<img class="' . $class . ' ' . $theme . '" src="assets/' . $src . '" width="' . $size . '" height="' . $size . '" alt="' . $alt . '" decoding="async">';
+    return $img($file . '.png', 'on-light') . $img($file . '-dark.png', 'on-dark');
+}
+
+/** Símbolo oficial (cruz, Cristo e violão). */
 function adm_mark(int $size = 40): string {
-    return '<svg class="mark" width="' . $size . '" height="' . $size . '" viewBox="0 0 108 108" aria-hidden="true" focusable="false"><defs><linearGradient id="cs-bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#245256"/><stop offset="1" stop-color="#0D252A"/></linearGradient></defs><rect width="108" height="108" rx="26" fill="url(#cs-bg)"/><g transform="translate(54 54) scale(1.22) translate(-54 -54)"><path d="M54,24 A30,30 0 1,1 53.99,24" fill="none" stroke="#9BD5DF" stroke-opacity=".5" stroke-width="1.6"/><path d="M58,61 C52,57 41,60 38,66 C35,73 42,78 49,75 C55,73 60,68 58,61 Z" fill="#F1C76D"/><path d="M58 34 V64 M44 46 H72" fill="none" stroke="#F1C76D" stroke-width="5.4" stroke-linecap="round"/></g></svg>';
+    return adm_brand_img('logo-mark', 'mark', $size, '');
+}
+
+/** Logo completa com o nome, para a tela de entrada. */
+function adm_logo(int $size = 200): string {
+    return adm_brand_img('logo', 'logo', $size, 'Cifra Santa');
 }
 
 function adm_initials(string $name): string {
@@ -73,6 +84,8 @@ function adm_page_start(array $o): void {
 <meta name="color-scheme" content="dark light">
 <meta name="theme-color" content="#111619">
 <title><?= escape($o['title'] ?? 'Cifra Santa · Painel') ?></title>
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="stylesheet" href="assets/admin.css">
 <script src="assets/admin.js" defer></script>
 </head>

@@ -4,12 +4,13 @@ require __DIR__.'/app/server.php';
 use CifraSanta\Core\Database;
 use CifraSanta\Import\CifraImportService;
 use CifraSanta\Import\ChartParser;
+use CifraSanta\Import\ImportDiagnosticException;
 require __DIR__.'/app/Views/admin/kit.php';
-header("Content-Security-Policy: default-src 'none'; style-src 'self'; script-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
+header("Content-Security-Policy: default-src 'none'; img-src 'self'; style-src 'self'; script-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
 if(!secure_transport()){http_response_code(403);exit('Acesse o painel por HTTPS.');}
 start_admin_session();
 const IMPORT_MOMENTS=['Entrada','Comunhão','Louvor','Envio'];
-$user=null;$message='';$isError=false;$draft=null;$token='';$editing=false;
+$user=null;$message='';$isError=false;$draft=null;$token='';$editing=false;$diagnostic=null;
 try {
     if(empty($_SESSION['admin_id']) || (int)($_SESSION['expires']??0)<time())throw new RuntimeException('Entre como administrador para importar cifras.',401);
     $db=Database::connection();
@@ -23,6 +24,7 @@ try {
         if($action==='extract'){
             if(!is_string($_POST['url']??null) || trim($_POST['url'])==='')throw new RuntimeException('Cole o endereço da cifra.',422);
             $draft=$import->identify($_POST['url'],(int)$user['id']);
+            $diagnostic=$draft['diagnostico']??null;
             $token=bin2hex(random_bytes(24));
             while(count($_SESSION['imports']??[])>=3)array_shift($_SESSION['imports']);
             $_SESSION['imports'][$token]=['draft'=>$draft,'expires'=>time()+1800];
@@ -51,14 +53,37 @@ try {
         }else throw new RuntimeException('Ação inválida.',400);
     }elseif($_SERVER['REQUEST_METHOD']!=='GET'){http_response_code(405);header('Allow: GET, POST');exit;}
 }catch(Throwable $error){
-    $status=(int)$error->getCode();$expected=!($error instanceof PDOException)&&in_array($status,[400,401,403,404,409,419,422,429],true);
+    $status=(int)$error->getCode();$expected=!($error instanceof PDOException)&&in_array($status,[400,401,403,404,409,419,422,429,502,504],true);
     http_response_code($expected?$status:503);if($status===429)header('Retry-After: 900');
     $isError=true;$message=$expected?$error->getMessage():'Não foi possível concluir a importação. Confira a configuração e a migração do servidor.';
     error_log('Cifra Santa import error type='.get_class($error).' code='.$status.' admin='.(int)($user['id']??0));
+    if($error instanceof ImportDiagnosticException)$diagnostic=$error->diagnostico;
+    // Fonte recusou o acesso: sem contornar o bloqueio, abre a revisão da mesma URL para cadastro manual.
+    if(($action??'')==='extract' && isset($import,$user) && $error instanceof ImportDiagnosticException
+        && ($error->diagnostico['erro']['etapa']??'')==='http' && in_array($error->diagnostico['status']??0,[401,403,429,451],true)){
+        try{
+            $draft=$import->manualDraft((string)$_POST['url'],(int)$user['id'],$error->getMessage());
+            $token=bin2hex(random_bytes(24));
+            while(count($_SESSION['imports']??[])>=3)array_shift($_SESSION['imports']);
+            $_SESSION['imports'][$token]=['draft'=>$draft,'expires'=>time()+1800];
+            $editing=true;$message='A página não pôde ser lida automaticamente. Preencha os dados e a cifra para continuar.';
+        }catch(Throwable){$draft=null;$token='';}
+    }
     // Um erro de validação abre a edição para o admin corrigir o campo apontado.
     if($draft && $token!=='')$editing=true;
 }
 function importCsrf():void{echo '<input type="hidden" name="csrf" value="'.escape($_SESSION['csrf']??'').'">';}
+/** Diagnóstico técnico real da última tentativa (somente no painel admin). */
+function importDiagnostic(?array $d,bool $failed):void{
+    if(!$d)return;
+    $redirects=array_map(fn($r)=>$r['status'].' → '.$r['para'],$d['redirects']??[]);
+    $rows=['Etapa com falha'=>isset($d['erro'])?$d['erro']['etapa'].': '.$d['erro']['detalhe']:'','URL solicitada'=>$d['url_solicitada']??'','URL final'=>$d['url_final']??'','Status HTTP'=>(string)($d['status']??'sem resposta'),'Redirects'=>$redirects?implode(' · ',$redirects):'nenhum','Content-Type'=>$d['content_type']??'','Tamanho'=>number_format((int)($d['bytes']??0),0,',','.').' bytes','Tempo'=>(int)($d['tempo_ms']??0).' ms','IP remoto'=>$d['ip']??'','Servidor'=>$d['servidor']??'','Resposta remota'=>$d['resposta']??''];
+    foreach($d['parser']['deteccao']??[] as $field=>$how)$rows['Parser · '.$field]=$how;
+    if(isset($d['parser']['estrutura']))$rows['Parser · estrutura']=implode(', ',array_map(fn($k,$v)=>$k.' '.$v,array_keys($d['parser']['estrutura']),$d['parser']['estrutura']));
+    echo '<details class="adv diag"'.($failed?' open':'').'><summary>Diagnóstico técnico <em>· requisição e leitura da página</em></summary><dl class="found">';
+    foreach($rows as $label=>$value)if($value!=='')echo '<dt>'.escape($label).'</dt><dd>'.escape($value).'</dd>';
+    echo '</dl></details>';
+}
 
 if(!$user):
     adm_page_start(['title'=>'Importar cifra · Cifra Santa','user'=>null]);
@@ -80,6 +105,7 @@ adm_page_start(['title'=>'Importar cifra · Cifra Santa','user'=>$user,'active'=
 </div>
 
 <?php adm_notice($message,$isError);?>
+<?php importDiagnostic($diagnostic,$isError);?>
 
 <?php if(!$draft):?>
 <div class="card card-pad">

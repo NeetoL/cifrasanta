@@ -2,6 +2,9 @@
    Mesma identidade do aplicativo (lib/ui/identity.dart): fundo azul-petróleo escuro,
    dourado como destaque, azul suave de apoio, títulos em serifa. Tema claro incluso. */
 
+/* O atributo hidden precisa vencer display:grid/flex dos componentes (ex.: filtro e busca da biblioteca). */
+[hidden]{display:none!important}
+
 :root{
   color-scheme:dark;
   --bg:#111619; --surface:#1b2529; --panel:#182023; --raised:#202c31;
@@ -62,7 +65,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .shell{display:grid;grid-template-columns:264px minmax(0,1fr);min-height:100vh}
 .side{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:6px;padding:22px 16px 16px;background:var(--panel);border-right:1px solid var(--divider);overflow:auto}
 .brand{display:flex;align-items:center;gap:12px;padding:4px 8px 22px;color:var(--text);text-decoration:none}
-.brand .mark{border-radius:11px;box-shadow:0 0 0 1px var(--gold-border),0 8px 20px -10px rgba(0,0,0,.6)}
+.brand .mark{width:40px;height:40px}
 .brand-text strong{display:block;font-family:var(--serif);font-size:19px;font-weight:600;letter-spacing:-.6px;line-height:1.1}
 .brand-text small{display:block;margin-top:4px;font-size:9.5px;font-weight:800;letter-spacing:2.4px;color:var(--gold)}
 .side-nav{display:grid;gap:3px}
@@ -211,6 +214,16 @@ textarea{font-family:var(--mono);font-size:13.5px;line-height:1.65;resize:vertic
 .pill.is-draft{color:var(--muted);background:var(--chip)}
 .list-empty{display:none;padding:34px 20px;text-align:center;color:var(--subtle)}
 .list-empty.is-shown{display:block}
+.search input[type="search"]{padding-right:40px}
+.search input[type="search"]::-webkit-search-cancel-button{display:none}
+.search-clear{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:26px;height:26px;display:grid;place-items:center;border-radius:7px;color:var(--subtle);font-size:18px;line-height:1;text-decoration:none}
+.search-clear:hover{background:var(--chip);color:var(--text)}
+.pager{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;padding:14px 18px;border-top:1px solid var(--divider);font-size:13px;color:var(--muted)}
+.pager-info em{font-style:normal;color:var(--subtle)}
+.pager-links{display:flex;flex-wrap:wrap;align-items:center;gap:4px}
+.pager-num{min-width:32px;height:32px;display:grid;place-items:center;padding:0 8px;border-radius:8px;color:var(--muted);font-weight:700;text-decoration:none}
+a.pager-num:hover{background:var(--chip);color:var(--text)}
+.pager-num.is-on{background:var(--accent-surface);color:var(--text);box-shadow:inset 0 0 0 1px var(--accent-border)}
 .rep-list{display:grid;gap:12px}
 .rep{display:flex;align-items:center;gap:14px;padding:16px 18px}
 .rep .rep-ico{display:grid;place-items:center;width:42px;height:42px;border-radius:11px;background:var(--accent-surface);border:1px solid var(--accent-border);color:var(--blue);flex:none}
@@ -262,9 +275,18 @@ body.is-auth{background:radial-gradient(1100px 520px at 50% -10%,color-mix(in sr
 .auth-theme{position:absolute;top:18px;right:18px}
 .auth{width:100%;max-width:440px}
 .auth-brand{display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:26px}
-.auth-brand .mark{border-radius:20px;box-shadow:0 0 0 1px var(--gold-border),0 18px 40px -14px rgba(0,0,0,.7)}
+.auth-brand .mark{width:68px;height:68px}
 .auth-brand h1{font-family:var(--serif);font-weight:500;font-size:34px;letter-spacing:-1.1px;line-height:1.1;margin:20px 0 8px}
 .auth-brand p{margin:0;color:var(--muted);font-size:14.5px}
+.auth-brand .auth-logo{margin:0 0 14px;line-height:0}
+.auth-brand .logo{width:200px;height:200px;object-fit:contain}
+img.mark{flex:none;object-fit:contain}
+/* Logo sem fundo: versão clara no tema claro, versão com marrons clareados no escuro. */
+img.on-light{display:none}
+img.on-dark{display:block}
+:root[data-theme="light"] img.on-light{display:block}
+:root[data-theme="light"] img.on-dark{display:none}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]) img.on-light{display:block}:root:not([data-theme="dark"]) img.on-dark{display:none}}
 .auth .card{padding:28px}
 .auth .card h2{font-family:var(--serif);font-weight:500;font-size:22px;letter-spacing:-.5px;margin:8px 0 20px}
 .auth form{display:grid;gap:16px}
@@ -320,6 +342,9 @@ details.adv>summary::before{content:"+";display:grid;place-items:center;width:22
 details.adv[open]>summary::before{content:"\2212"}
 details.adv>summary em{font-style:normal;color:var(--subtle);font-weight:600}
 details.adv>.stack{padding:4px 16px 18px}
+details.adv.diag{margin-bottom:18px}
+details.adv.diag>.found{padding:0 16px 8px;font-size:13px}
+details.adv.diag>.found dd{font-family:var(--mono);font-weight:500;font-size:12.5px}
 .preview-meta.stack{gap:14px;padding-bottom:18px}
 .preview-meta .tom-badge+.tom-badge{margin-left:6px}
 code{font-family:var(--mono);font-size:12.5px;background:var(--panel);border:1px solid var(--divider);border-radius:6px;padding:1px 6px;overflow-wrap:anywhere}

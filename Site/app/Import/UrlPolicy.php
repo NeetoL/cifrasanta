@@ -37,8 +37,8 @@ final class UrlPolicy {
     public function resolve(string $url):array {
         $url=$this->normalize($url);$host=parse_url($url,PHP_URL_HOST);
         $ips=gethostbynamel($host);
-        if(!$ips)throw new RuntimeException('Não foi possível resolver o domínio autorizado.',422);
-        foreach($ips as $ip)if(!self::publicIpv4($ip))throw new RuntimeException('O domínio aponta para um endereço não permitido.',422);
+        if(!$ips)throw new RuntimeException('Falha de DNS: não foi possível resolver '.$host.'.',422);
+        foreach($ips as $ip)if(!self::publicIpv4($ip))throw new RuntimeException('O domínio '.$host.' aponta para um endereço não permitido ('.$ip.').',422);
         return [$host,$ips[0]];
     }
     public function redirect(string $base,string $location):string {

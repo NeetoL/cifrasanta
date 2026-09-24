@@ -64,11 +64,18 @@ rejectsImport(fn()=>(new HtmlChartParser())->detect('<html><head><title>Sem cifr
 $owned=new ConfiguredHtmlProvider('owned',(require __DIR__.'/import-providers.fixture.php')['owned']);
 $resolver=new ProviderResolver([$owned]);
 checkImport($resolver->resolve('https://owned.example.org/x/')===$owned,'provedor dedicado pelo domínio');
-checkImport($resolver->resolve('https://www.cifraclub.com.br/artista/musica/')->id()==='referencia','catálogo de terceiros só com metadados');
+checkImport($resolver->resolve('https://www.cifraclub.com.br/artista/musica/')->id()==='cifraclub','Cifra Club: provedor dedicado');
+checkImport($resolver->resolve('https://www.letras.mus.br/artista/musica/')->id()==='referencia','catálogo de terceiros só com metadados');
 checkImport($resolver->resolve('https://cifraclub.com.br/a/')->name()==='Cifra Club','domínio raiz do catálogo');
 checkImport($resolver->resolve('https://paroquia.example.org/canto/')->id()==='automatico','demais sites: detecção automática');
 checkImport($resolver->resolve('https://notcifraclub.com.br/a/')->id()==='automatico','sufixo parecido não engana o resolvedor');
 rejectsImport(fn()=>$resolver->resolve('https://10.0.0.1/a'),'resolvedor recusa IP');
+// Trecho da resposta de bloqueio exibido no diagnóstico (formato da página "Access Denied" da Akamai).
+$denied='<HTML><HEAD><TITLE>Access Denied</TITLE><style>b{x:y}</style></HEAD><BODY><H1>Access Denied</H1>You don\'t have permission to access "http&#58;&#47;&#47;www&#46;example&#46;com&#47;a&#47;" on this server.<P>Reference&#32;&#35;18&#46;abc123&#46;1727200000&#46;deadbeef<P>https&#58;&#47;&#47;errors&#46;edgesuite&#46;net&#47;18&#46;abc</BODY></HTML>';
+$snippet=SafeHttpClient::bodySnippet($denied);
+checkImport(str_starts_with($snippet,'Access Denied Access Denied You don\'t have permission') && str_contains($snippet,'Reference #18.abc123.1727200000.deadbeef') && !str_contains($snippet,'<') && !str_contains($snippet,'x:y'),'trecho do bloqueio legível, sem HTML nem CSS');
+checkImport(mb_strlen(SafeHttpClient::bodySnippet(str_repeat('<p>texto longo</p>',200)))===301 && SafeHttpClient::bodySnippet('')==='','trecho limitado a 300 caracteres');
+checkImport(SafeHttpClient::bodySnippet("\xff\xfeinv\xc3lido")!=='' ,'bytes inválidos não quebram o diagnóstico');
 if(in_array('--network',$argv,true)){
  $response=(new SafeHttpClient())->get('https://example.com/',new UrlPolicy(['example.com']));
  checkImport(str_contains($response['html'],'Example Domain'),'download HTTPS real');
@@ -76,9 +83,12 @@ if(in_array('--network',$argv,true)){
  // Caso real informado pelo usuário: catálogo de terceiros → só metadados. Não imprime conteúdo da página.
  $url='https://www.cifraclub.com.br/comunidade-gerados-pela-imaculada/odres-novos/';
  $provider=(new ProviderResolver([]))->resolve($url);
- checkImport($provider->id()==='referencia' && $provider->name()==='Cifra Club','provedor do caso real');
+ checkImport($provider->id()==='cifraclub' && $provider->name()==='Cifra Club','provedor do caso real');
  $draft=$provider->extract($url);
  checkImport($draft['url_origem']===$url && $draft['titulo']!=='' && $draft['artista']!=='' && $draft['conteudo']==='' && $draft['aviso']!=='','metadados do caso real sem conteúdo protegido');
  foreach(['titulo','artista','tom','afinacao','capotraste'] as $key)echo str_pad($key,11),': ',$draft[$key]===''?'(não encontrado)':$draft[$key],"\n";
+ $d=$draft['diagnostico'];
+ echo 'HTTP ',$d['status'],' · ',$d['content_type'],' · ',$d['bytes'],' bytes · ',$d['tempo_ms'],' ms · redirects: ',count($d['redirects']),' · estrutura: ',json_encode($d['parser']['estrutura']),"\n";
+ checkImport($d['status']===200 && $d['parser']['estrutura']['acordes']>0,'diagnóstico do caso real');
 }
 echo "$checks verificações de segurança, DOM e formatação passaram.\n";

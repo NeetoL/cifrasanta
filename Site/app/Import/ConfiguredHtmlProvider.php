@@ -15,6 +15,6 @@ final class ConfiguredHtmlProvider implements ICifraProvider {
     public function domains():array{return $this->config['domains'];}
     public function extract(string $url):array {
         $response=$this->http->get($this->normalizeUrl($url),$this->policy);
-        return ['url_origem'=>$response['url'],'provider'=>$this->id(),'provider_nome'=>$this->name(),'aviso'=>'',...$this->parser->parse($response['html'],$this->config)];
+        return ['url_origem'=>$response['url'],'provider'=>$this->id(),'provider_nome'=>$this->name(),'diagnostico'=>$response['diagnostico'],'aviso'=>'',...$this->parser->parse($response['html'],$this->config)];
     }
 }

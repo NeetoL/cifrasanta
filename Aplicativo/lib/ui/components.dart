@@ -10,7 +10,7 @@ class AppBrand extends StatelessWidget {
   Widget build(BuildContext context) => Row(
     mainAxisSize: MainAxisSize.min,
     children: [
-      const SacredGlyph(SacredSymbol.mark, size: 31),
+      const BrandMark(size: 38),
       const SizedBox(width: 9),
       Flexible(
         child: RichText(
@@ -26,7 +26,7 @@ class AppBrand extends StatelessWidget {
               TextSpan(text: 'cifra'),
               TextSpan(
                 text: 'santa',
-                style: TextStyle(color: SaintColors.blue),
+                style: TextStyle(color: SaintColors.gold),
               ),
             ],
           ),
@@ -250,7 +250,7 @@ class EmptyState extends StatelessWidget {
     padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 30),
     child: Column(
       children: [
-        const SacredGlyph(SacredSymbol.mark, size: 44),
+        const BrandMark(size: 64),
         const SizedBox(height: 18),
         Text(
           title,
