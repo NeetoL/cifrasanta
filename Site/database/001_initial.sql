@@ -1,0 +1,81 @@
+CREATE TABLE cifra_santa_usuario (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ nome VARCHAR(120) NOT NULL,
+ email VARCHAR(190) NOT NULL UNIQUE,
+ senha_hash VARCHAR(255) NOT NULL,
+ papel ENUM('usuario','admin') NOT NULL DEFAULT 'usuario',
+ ativo TINYINT(1) NOT NULL DEFAULT 1,
+ criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE cifra_santa_musica (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ titulo VARCHAR(200) NOT NULL,
+ artista VARCHAR(200) NOT NULL,
+ categoria VARCHAR(80) NOT NULL,
+ criado_por BIGINT UNSIGNED NOT NULL,
+ criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ atualizado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ FOREIGN KEY (criado_por) REFERENCES cifra_santa_usuario(id),
+ INDEX idx_cs_musica_titulo (titulo)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE cifra_santa_cifra (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ musica_id BIGINT UNSIGNED NOT NULL UNIQUE,
+ tom VARCHAR(12) NOT NULL,
+ conteudo MEDIUMTEXT NOT NULL,
+ publicada TINYINT(1) NOT NULL DEFAULT 0,
+ atualizado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ FOREIGN KEY (musica_id) REFERENCES cifra_santa_musica(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE cifra_santa_favorito (
+ usuario_id BIGINT UNSIGNED NOT NULL,
+ musica_id BIGINT UNSIGNED NOT NULL,
+ criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ PRIMARY KEY (usuario_id, musica_id),
+ FOREIGN KEY (usuario_id) REFERENCES cifra_santa_usuario(id) ON DELETE CASCADE,
+ FOREIGN KEY (musica_id) REFERENCES cifra_santa_musica(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE cifra_santa_repertorio (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ titulo VARCHAR(200) NOT NULL,
+ descricao VARCHAR(255) NOT NULL DEFAULT '',
+ publicado TINYINT(1) NOT NULL DEFAULT 0,
+ criado_por BIGINT UNSIGNED NOT NULL,
+ criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ FOREIGN KEY (criado_por) REFERENCES cifra_santa_usuario(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE cifra_santa_repertorio_musica (
+ repertorio_id BIGINT UNSIGNED NOT NULL,
+ musica_id BIGINT UNSIGNED NOT NULL,
+ posicao INT UNSIGNED NOT NULL,
+ PRIMARY KEY (repertorio_id, musica_id),
+ UNIQUE KEY idx_cs_ordem (repertorio_id, posicao),
+ FOREIGN KEY (repertorio_id) REFERENCES cifra_santa_repertorio(id) ON DELETE CASCADE,
+ FOREIGN KEY (musica_id) REFERENCES cifra_santa_musica(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE cifra_santa_token (
+ token_hash CHAR(64) PRIMARY KEY,
+ usuario_id BIGINT UNSIGNED NOT NULL,
+ expira_em DATETIME NOT NULL,
+ criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ FOREIGN KEY (usuario_id) REFERENCES cifra_santa_usuario(id) ON DELETE CASCADE,
+ INDEX idx_cs_token_expira (expira_em)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE cifra_santa_limite_acesso (
+ chave CHAR(64) PRIMARY KEY,
+ tentativas INT UNSIGNED NOT NULL DEFAULT 0,
+ janela BIGINT UNSIGNED NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE cifra_santa_migracao (
+ versao VARCHAR(80) PRIMARY KEY,
+ checksum CHAR(64) NOT NULL,
+ aplicada_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

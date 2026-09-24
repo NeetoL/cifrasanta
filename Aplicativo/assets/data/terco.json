@@ -1,0 +1,52 @@
+{
+  "mysterySets": [
+    {
+      "id": "gozosos",
+      "title": "Mistérios Gozosos",
+      "days": [1, 6],
+      "mysteries": [
+        { "title": "A Anunciação do Anjo a Maria", "reference": "Lc 1,26-38" },
+        { "title": "A Visitação de Maria a Isabel", "reference": "Lc 1,39-56" },
+        { "title": "O Nascimento de Jesus em Belém", "reference": "Lc 2,1-20" },
+        { "title": "A Apresentação de Jesus no Templo", "reference": "Lc 2,22-38" },
+        { "title": "A Perda e o Encontro de Jesus no Templo", "reference": "Lc 2,41-50" }
+      ]
+    },
+    {
+      "id": "luminosos",
+      "title": "Mistérios Luminosos",
+      "days": [4],
+      "mysteries": [
+        { "title": "O Batismo de Jesus no Jordão", "reference": "Mt 3,13-17" },
+        { "title": "A Autorrevelação de Jesus nas Bodas de Caná", "reference": "Jo 2,1-12" },
+        { "title": "O Anúncio do Reino de Deus e o convite à conversão", "reference": "Mc 1,14-15" },
+        { "title": "A Transfiguração de Jesus", "reference": "Mt 17,1-9" },
+        { "title": "A Instituição da Eucaristia", "reference": "Mt 26,26-29" }
+      ]
+    },
+    {
+      "id": "dolorosos",
+      "title": "Mistérios Dolorosos",
+      "days": [2, 5],
+      "mysteries": [
+        { "title": "A Agonia de Jesus no Horto das Oliveiras", "reference": "Mt 26,36-46" },
+        { "title": "A Flagelação de Jesus", "reference": "Jo 19,1" },
+        { "title": "A Coroação de Espinhos", "reference": "Mt 27,27-31" },
+        { "title": "Jesus carrega a cruz até o Calvário", "reference": "Jo 19,17" },
+        { "title": "A Crucificação e Morte de Jesus", "reference": "Jo 19,18-30" }
+      ]
+    },
+    {
+      "id": "gloriosos",
+      "title": "Mistérios Gloriosos",
+      "days": [3, 7],
+      "mysteries": [
+        { "title": "A Ressurreição de Jesus", "reference": "Mt 28,1-10" },
+        { "title": "A Ascensão de Jesus ao Céu", "reference": "At 1,6-11" },
+        { "title": "A Vinda do Espírito Santo sobre Maria e os Apóstolos", "reference": "At 2,1-13" },
+        { "title": "A Assunção de Maria ao Céu" },
+        { "title": "A Coroação de Maria no Céu" }
+      ]
+    }
+  ]
+}

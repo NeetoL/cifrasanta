@@ -1,0 +1,9 @@
+Options -Indexes
+RewriteEngine On
+RewriteRule ^(?:app|config|database|bin|tests)(?:/|$) - [F,L,NC]
+RewriteCond %{HTTP:Authorization} .
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+<FilesMatch "(^\.|\.(sql|md|log|ini|bak)$)">
+    Require all denied
+</FilesMatch>
+DirectoryIndex admin.php

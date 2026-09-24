@@ -1,0 +1,13 @@
+CREATE TABLE IF NOT EXISTS cifra_santa_importacao (
+ musica_id BIGINT UNSIGNED PRIMARY KEY,
+ url_origem VARCHAR(1000) CHARACTER SET ascii NOT NULL,
+ url_hash CHAR(64) CHARACTER SET ascii NOT NULL UNIQUE,
+ provider VARCHAR(40) NOT NULL,
+ capotraste VARCHAR(80) NOT NULL DEFAULT '',
+ afinacao VARCHAR(80) NOT NULL DEFAULT '',
+ conteudo_hash CHAR(64) NOT NULL,
+ criado_por BIGINT UNSIGNED NOT NULL,
+ criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ FOREIGN KEY (musica_id) REFERENCES cifra_santa_musica(id) ON DELETE CASCADE,
+ FOREIGN KEY (criado_por) REFERENCES cifra_santa_usuario(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

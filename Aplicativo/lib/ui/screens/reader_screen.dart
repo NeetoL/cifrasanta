@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'fullscreen_chart_screen.dart';
 
 import 'package:flutter/material.dart';
 
 import '../../core/catalog.dart';
 import '../../core/chords.dart';
+import '../responsive_chart.dart';
 import '../../core/library_store.dart';
 import '../components.dart';
 import '../identity.dart';
@@ -20,10 +22,16 @@ class _ReaderScreenState extends State<ReaderScreen> {
   final ScrollController scrollController = ScrollController();
   Timer? scrollTimer;
   int semitones = 0;
-  double fontSize = 18;
+  late double fontSize;
+
+  @override
+  void initState() {
+    super.initState();
+    fontSize = widget.library.fontSize;
+  }
 
   bool get scrolling => scrollTimer != null;
-  String get currentKey => Chords.shiftNote(widget.song.originalKey, semitones);
+  String get currentKey => Chords.transpose(widget.song.originalKey, semitones);
 
   @override
   void dispose() {
@@ -58,128 +66,235 @@ class _ReaderScreenState extends State<ReaderScreen> {
     builder: (context, _) => Scaffold(
       appBar: AppBar(
         title: const AppBrand(),
-        actions: [IconButton(
-          tooltip: widget.library.isFavorite(widget.song.id) ? 'Remover dos favoritos' : 'Adicionar aos favoritos',
-          onPressed: () => widget.library.toggleFavorite(widget.song.id),
-          icon: Icon(widget.library.isFavorite(widget.song.id) ? Icons.favorite_rounded : Icons.favorite_border_rounded, color: widget.library.isFavorite(widget.song.id) ? SaintColors.gold : SaintColors.muted),
-        ), const SizedBox(width: 12)],
-      ),
-      body: Center(child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 720),
-        child: ListView(controller: scrollController, padding: const EdgeInsets.fromLTRB(24, 30, 24, 50), children: [
-          Eyebrow('${widget.song.category.toUpperCase()} · CIFRA SANTA'),
-          const SizedBox(height: 10),
-          Text(widget.song.title, style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800, letterSpacing: -1.3, height: 1.15)),
-          const SizedBox(height: 7),
-          Text(widget.song.artist, style: const TextStyle(color: SaintColors.muted, fontSize: 13)),
-          const SizedBox(height: 18),
-          Wrap(spacing: 8, runSpacing: 8, children: [
-            _meta('Tom de referência', widget.song.originalKey),
-            _meta('Instrumento', 'Violão e guitarra'),
-          ]),
-          const SizedBox(height: 24),
-          Wrap(spacing: 8, runSpacing: 8, children: [
-            _stepper('Tom', currentKey, () => setState(() => semitones--), () => setState(() => semitones++)),
-            _stepper('Texto', '${fontSize.round()}', () => setState(() => fontSize = (fontSize - 2).clamp(14, 28)), () => setState(() => fontSize = (fontSize + 2).clamp(14, 28))),
-            OutlinedButton.icon(
-              onPressed: toggleScroll,
-              icon: Icon(scrolling ? Icons.pause_rounded : Icons.play_arrow_rounded, size: 17),
-              label: Text(scrolling ? 'Pausar' : 'Rolagem'),
-              style: OutlinedButton.styleFrom(
-                backgroundColor: const Color(0xFF203A45),
-                foregroundColor: SaintColors.text,
-                side: const BorderSide(color: SaintColors.line),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
-                minimumSize: const Size(100, 42),
-              ),
-            ),
-          ]),
-          const SizedBox(height: 22),
-          Container(
-            padding: const EdgeInsets.fromLTRB(17, 19, 17, 27),
-            decoration: BoxDecoration(color: const Color(0xFF191F21), border: Border.all(color: SaintColors.line), borderRadius: BorderRadius.circular(9)),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Row(children: [SacredGlyph(SacredSymbol.mark, size: 17), SizedBox(width: 7), Eyebrow('CIFRA DEMONSTRATIVA')]),
-              const SizedBox(height: 14),
-              Text(
-                widget.song.knownWork
-                  ? 'Esta música conhecida aparece só com título e metadados. O texto abaixo é um exemplo autoral independente da obra.'
-                  : 'Letra e acordes originais para demonstrar o leitor.',
-                style: const TextStyle(color: SaintColors.muted, fontSize: 11, height: 1.5),
-              ),
-              const SizedBox(height: 11),
-              const Text('Deslize a cifra para os lados para acompanhar os acordes →', style: TextStyle(color: SaintColors.gold, fontSize: 10)),
-              const SizedBox(height: 18),
-              SingleChildScrollView(scrollDirection: Axis.horizontal, child: _chart()),
-            ]),
+        actions: [
+          IconButton(
+            tooltip: 'Tela inteira',
+            icon: const Icon(Icons.fullscreen),
+            onPressed: () {
+              if (scrolling) toggleScroll();
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => FullscreenChartScreen(
+                    content: widget.song.chart,
+                    semitones: semitones,
+                    fontSize: fontSize,
+                  ),
+                ),
+              );
+            },
           ),
-          const SizedBox(height: 17),
-          const Text('Esta leitura é demonstrativa e pode ser usada sem conexão.', style: TextStyle(color: Color(0xFF748890), fontSize: 11)),
-        ]),
-      )),
+          IconButton(
+            tooltip: widget.library.isFavorite(widget.song.id)
+                ? 'Remover dos favoritos'
+                : 'Adicionar aos favoritos',
+            onPressed: () => widget.library.toggleFavorite(widget.song.id),
+            icon: Icon(
+              widget.library.isFavorite(widget.song.id)
+                  ? Icons.favorite_rounded
+                  : Icons.favorite_border_rounded,
+              color: widget.library.isFavorite(widget.song.id)
+                  ? SaintColors.gold
+                  : SaintColors.muted,
+            ),
+          ),
+          const SizedBox(width: 12),
+        ],
+      ),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720),
+          child: ListView(
+            controller: scrollController,
+            padding: const EdgeInsets.fromLTRB(16, 24, 16, 40),
+            children: [
+              Eyebrow('${widget.song.category.toUpperCase()} · CIFRA SANTA'),
+              const SizedBox(height: 10),
+              Text(
+                widget.song.title,
+                style: const TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -1.3,
+                  height: 1.15,
+                ),
+              ),
+              const SizedBox(height: 7),
+              Text(
+                widget.song.artist,
+                style: TextStyle(color: SaintColors.muted, fontSize: 13),
+              ),
+              const SizedBox(height: 18),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _meta('Tom de referência', widget.song.originalKey),
+                  _meta('Instrumento', 'Violão e guitarra'),
+                ],
+              ),
+              const SizedBox(height: 24),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _stepper(
+                    'Tom',
+                    currentKey,
+                    () => setState(() => semitones--),
+                    () => setState(() => semitones++),
+                  ),
+                  _stepper(
+                    'Texto',
+                    '${fontSize.round()}',
+                    () {
+                      final newSize = (fontSize - 2).clamp(8.0, 28.0);
+                      setState(() => fontSize = newSize);
+                      widget.library.setFontSize(newSize);
+                    },
+                    () {
+                      final newSize = (fontSize + 2).clamp(8.0, 28.0);
+                      setState(() => fontSize = newSize);
+                      widget.library.setFontSize(newSize);
+                    },
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: toggleScroll,
+                    icon: Icon(
+                      scrolling
+                          ? Icons.pause_rounded
+                          : Icons.play_arrow_rounded,
+                      size: 17,
+                    ),
+                    label: Text(scrolling ? 'Pausar' : 'Rolagem'),
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: SaintColors.highlight,
+                      foregroundColor: SaintColors.text,
+                      side: BorderSide(color: SaintColors.line),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(7),
+                      ),
+                      minimumSize: const Size(100, 42),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 22),
+              Container(
+                padding: const EdgeInsets.fromLTRB(12, 16, 12, 20),
+                decoration: BoxDecoration(
+                  color: SaintColors.panel,
+                  border: Border.all(color: SaintColors.line),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        SacredGlyph(SacredSymbol.mark, size: 17),
+                        SizedBox(width: 7),
+                        Eyebrow('CIFRA'),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    ResponsiveChart(
+                      content: widget.song.chart,
+                      semitones: semitones,
+                      fontSize: fontSize,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 17),
+              Text(
+                'Conteúdo do catálogo Cifra Santa.',
+                style: TextStyle(color: SaintColors.subtle, fontSize: 11),
+              ),
+            ],
+          ),
+        ),
+      ),
     ),
   );
 
   Widget _meta(String label, String value) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
-    decoration: BoxDecoration(border: Border.all(color: SaintColors.line), borderRadius: BorderRadius.circular(5)),
-    child: RichText(text: TextSpan(style: const TextStyle(color: SaintColors.muted, fontSize: 10), children: [
-      TextSpan(text: '$label  '),
-      TextSpan(text: value, style: const TextStyle(color: SaintColors.gold, fontWeight: FontWeight.w800)),
-    ])),
+    decoration: BoxDecoration(
+      border: Border.all(color: SaintColors.line),
+      borderRadius: BorderRadius.circular(5),
+    ),
+    child: RichText(
+      text: TextSpan(
+        style: TextStyle(color: SaintColors.muted, fontSize: 10),
+        children: [
+          TextSpan(text: '$label  '),
+          TextSpan(
+            text: value,
+            style: TextStyle(
+              color: SaintColors.gold,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    ),
   );
 
-  Widget _stepper(String label, String value, VoidCallback onDown, VoidCallback onUp) => Container(
+  Widget _stepper(
+    String label,
+    String value,
+    VoidCallback onDown,
+    VoidCallback onUp,
+  ) => Container(
     height: 42,
     padding: const EdgeInsets.only(left: 10, right: 4),
-    decoration: BoxDecoration(color: const Color(0xFF203A45), border: Border.all(color: SaintColors.line), borderRadius: BorderRadius.circular(7)),
-    child: Row(mainAxisSize: MainAxisSize.min, children: [
-      Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
-      const SizedBox(width: 9),
-      _smallButton('−', onDown),
-      SizedBox(width: 32, child: Text(value, textAlign: TextAlign.center, style: const TextStyle(color: SaintColors.gold, fontSize: 12, fontWeight: FontWeight.w800))),
-      _smallButton('+', onUp),
-    ]),
+    decoration: BoxDecoration(
+      color: SaintColors.highlight,
+      border: Border.all(color: SaintColors.line),
+      borderRadius: BorderRadius.circular(7),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(width: 9),
+        _smallButton('−', onDown),
+        SizedBox(
+          width: 32,
+          child: Text(
+            value,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: SaintColors.gold,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        _smallButton('+', onUp),
+      ],
+    ),
   );
 
   Widget _smallButton(String label, VoidCallback onPressed) => SizedBox(
     width: 29,
     height: 29,
-    child: Material(color: const Color(0xFF355968), borderRadius: BorderRadius.circular(5), child: InkWell(
-      onTap: onPressed,
+    child: Material(
+      color: SaintColors.highlightStrong,
       borderRadius: BorderRadius.circular(5),
-      child: Center(child: Text(label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800))),
-    )),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(5),
+        child: Center(
+          child: Text(
+            label,
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+          ),
+        ),
+      ),
+    ),
   );
-
-  Widget _chart() {
-    final root = currentKey;
-    final fifth = Chords.shiftNote(root, 7);
-    final minor = '${Chords.shiftNote(root, 9)}m';
-    final fourth = Chords.shiftNote(root, 5);
-    final lyricStyle = TextStyle(fontFamily: 'monospace', fontSize: fontSize, height: 1.5, color: SaintColors.text);
-    final chordStyle = lyricStyle.copyWith(color: SaintColors.gold, fontWeight: FontWeight.w800);
-    Widget line(String chords, String lyric) => Padding(
-      padding: const EdgeInsets.only(bottom: 15),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(chords, style: chordStyle, softWrap: false),
-        Text(lyric, style: lyricStyle, softWrap: false),
-      ]),
-    );
-    Widget section(String text) => Padding(
-      padding: const EdgeInsets.only(top: 20, bottom: 12),
-      child: Text(text, style: const TextStyle(fontSize: 10, letterSpacing: 2, color: Color(0xFF8BA6AE), fontWeight: FontWeight.w800)),
-    );
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      section('INTRODUÇÃO'),
-      Text('$root   $fifth   $minor   $fourth', style: chordStyle),
-      section('VERSO · EXEMPLO ORIGINAL'),
-      line('$root            $fifth', 'Em cada passo, uma luz para seguir'),
-      line('$minor           $fourth', 'Com esperança, vamos juntos repartir'),
-      line('$root            $minor', 'Uma só voz se ergue neste lugar'),
-      line('$fourth            $fifth', 'Para cantar, servir e caminhar'),
-      section('FINAL'),
-      Text('$fourth    $fifth    $root', style: chordStyle),
-    ]);
-  }
 }

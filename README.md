@@ -1,24 +1,16 @@
 # Cifra Santa
 
-O projeto está organizado em duas partes:
+Aplicativo Flutter de cifras, conectado a uma API PHP/MySQL, com painel administrativo web.
 
-- **Site/** — versão web em PHP 8, com rotas MVC e dados locais.
-- **Aplicativo/** — projeto Flutter nativo para Android e iOS. Funciona de forma independente do PHP, com catálogo demonstrativo local e favoritos guardados no aparelho.
+- **Aplicativo/**: catálogo remoto, busca, leitor com transposição, rolagem, contas e favoritos sincronizados.
+- **Site/**: API, painel de cadastro de músicas/cifras/repertórios e estrutura do banco.
 
-Ambas as versões usam a identidade Cifra Santa. O aplicativo é o foco da experiência no celular. Não há banco de dados, cadastro ou sincronização entre as duas versões nesta etapa.
+O aplicativo não contém músicas ou repertórios demonstrativos. O catálogo começa vazio e é alimentado pelo painel. A conta é necessária para favoritos; consultar cifras publicadas é livre.
 
-## Experimentar
+## Instalação
 
-O **Site** pode ser publicado na hospedagem PHP conforme `Site/README.md`.
+O banco configurado é `luizr160_curso`, com tabelas exclusivas prefixadas por `cifra_santa_`. As credenciais ficam em arquivos locais ignorados pelo Git. Não são incluídas no aplicativo.
 
-O **Aplicativo** é compilado com Flutter. Consulte `Aplicativo/README.md` para gerar APK, AAB e IPA. A interface é feita com widgets Flutter, sem WebView.
+Consulte [Site/README.md](Site/README.md) para publicar o servidor e criar o primeiro administrador; [Site/API.md](Site/API.md) documenta as rotas e as tabelas. A compilação e os testes do aplicativo estão em [Aplicativo/README.md](Aplicativo/README.md).
 
-O arquivo **CifraSanta-Android-teste.apk** já está pronto para instalar e testar em um Android. É uma build de teste; a publicação em lojas precisa de uma chave de lançamento própria. O projeto iOS está incluído no mesmo código, mas a build para iPhone precisa ser feita em um Mac com Xcode.
-
-O catálogo demonstrativo é armazenado no próprio código e funciona sem conexão.
-
-## Próxima etapa
-
-Para publicar na Google Play ou na Galaxy Store, será necessário definir o identificador final do pacote, assinar a build e preparar os materiais da loja. Para a App Store, a build iOS exige macOS com Xcode e uma equipe Apple configurada.
-
-As músicas conhecidas aparecem no aplicativo apenas com título e metadados. O leitor mostra letra e acordes originais de demonstração, identificados como tal.
+A pasta `C:\xampp\htdocs\cifrasanta` pode ser preparada com `Site/bin/stage.ps1`. Envie essa pasta para a raiz pública da hospedagem English Sam para disponibilizar `/cifrasanta/admin.php` e `/cifrasanta/api.php`. Copiar para o XAMPP local não publica automaticamente na internet.

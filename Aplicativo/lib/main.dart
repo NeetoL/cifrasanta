@@ -1,115 +1,100 @@
 import 'package:flutter/material.dart';
 
-import 'core/catalog.dart';
+import 'core/app_services.dart';
+import 'core/bible.dart';
 import 'core/library_store.dart';
-import 'ui/components.dart';
+import 'core/theme_store.dart';
+import 'ui/app_shell.dart';
 import 'ui/identity.dart';
-import 'ui/screens/home_screen.dart';
-import 'ui/screens/library_screens.dart';
-import 'ui/screens/reader_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Só o tema é lido antes da primeira tela, para ela não piscar na cor
+  // errada; o histórico e o tamanho da cifra são carregados pelo AppShell.
   final library = LibraryStore();
-  await library.load();
-  runApp(CifraSantaApp(library: library));
+  final theme = ThemeStore();
+  await theme.initialize();
+  runApp(
+    CifraSantaApp(
+      library: library,
+      services: AppServices(
+        bibleText: RemoteBibleTextSource(library),
+        theme: theme,
+      ),
+    ),
+  );
 }
 
-class CifraSantaApp extends StatelessWidget {
-  const CifraSantaApp({super.key, required this.library});
+class CifraSantaApp extends StatefulWidget {
+  const CifraSantaApp({super.key, required this.library, this.services});
   final LibraryStore library;
+  final AppServices? services;
 
   @override
-  Widget build(BuildContext context) => MaterialApp(
-    title: 'Cifra Santa',
-    theme: cifraTheme(),
-    debugShowCheckedModeBanner: false,
-    home: AppShell(library: library),
+  State<CifraSantaApp> createState() => _CifraSantaAppState();
+}
+
+class _CifraSantaAppState extends State<CifraSantaApp> {
+  late final AppServices services =
+      widget.services ??
+      AppServices(bibleText: RemoteBibleTextSource(widget.library));
+  final ThemeData light = cifraTheme(SaintPalette.light);
+  final ThemeData dark = cifraTheme(SaintPalette.dark);
+
+  @override
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: services.theme,
+    builder: (context, _) => MaterialApp(
+      title: 'Cifra Santa',
+      theme: light,
+      darkTheme: dark,
+      themeMode: services.theme.mode,
+      // Sem animação: as cores do SaintColors trocam de uma vez.
+      themeAnimationDuration: Duration.zero,
+      debugShowCheckedModeBanner: false,
+      builder: (context, child) => _PaletteScope(
+        brightness: Theme.of(context).brightness,
+        child: child!,
+      ),
+      home: AppShell(library: widget.library, services: services),
+    ),
   );
 }
 
-class AppShell extends StatefulWidget {
-  const AppShell({super.key, required this.library});
-  final LibraryStore library;
+/// Aplica a paleta do tema em uso ao [SaintColors] e, quando ela muda,
+/// reconstrói todas as telas abertas para que peguem as novas cores.
+class _PaletteScope extends StatefulWidget {
+  const _PaletteScope({required this.brightness, required this.child});
+  final Brightness brightness;
+  final Widget child;
+
   @override
-  State<AppShell> createState() => _AppShellState();
+  State<_PaletteScope> createState() => _PaletteScopeState();
 }
 
-class _AppShellState extends State<AppShell> {
-  int selected = 0;
-  String searchCategory = '';
+class _PaletteScopeState extends State<_PaletteScope> {
+  bool _built = false;
 
-  void goSearch([String category = '']) => setState(() {
-    searchCategory = category;
-    selected = 1;
-  });
-
-  void openSong(Song song) => Navigator.of(context).push(MaterialPageRoute<void>(
-    builder: (_) => ReaderScreen(song: song, library: widget.library),
-  ));
-
-  void openRepertoire(Repertoire repertoire) => Navigator.of(context).push(MaterialPageRoute<void>(
-    builder: (_) => RepertoireDetailScreen(
-      repertoire: repertoire,
-      library: widget.library,
-      onSong: openSong,
-    ),
-  ));
+  static void _rebuild(Element element) {
+    element.markNeedsBuild();
+    element.visitChildren(_rebuild);
+  }
 
   @override
-  Widget build(BuildContext context) => AnimatedBuilder(
-    animation: widget.library,
-    builder: (context, _) => Scaffold(
-      appBar: AppBar(
-        toolbarHeight: 66,
-        titleSpacing: 24,
-        title: const AppBrand(),
-        actions: MediaQuery.sizeOf(context).width >= 600
-          ? const [Padding(
-              padding: EdgeInsets.only(right: 24),
-              child: Center(child: Eyebrow('MÚSICA PARA SERVIR')),
-            )]
-          : null,
-        bottom: const PreferredSize(preferredSize: Size.fromHeight(1), child: Divider(height: 1, thickness: 1, color: Color(0xFF293439))),
-      ),
-      body: SafeArea(
-        top: false,
-        child: Center(child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 720),
-          child: switch (selected) {
-            0 => HomeScreen(library: widget.library, onSearch: goSearch, onSong: openSong, onRepertoire: openRepertoire),
-            1 => SearchScreen(key: ValueKey(searchCategory), initialCategory: searchCategory, library: widget.library, onSong: openSong),
-            2 => FavoritesScreen(library: widget.library, onSong: openSong, onSearch: () => goSearch()),
-            _ => RepertoiresScreen(onOpen: openRepertoire),
-          },
-        )),
-      ),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: Container(
-          decoration: const BoxDecoration(color: Color(0xFF191F22), border: Border(top: BorderSide(color: SaintColors.line))),
-          child: Row(children: [
-            _navItem(0, Icons.home_outlined, Icons.home_rounded, 'Início'),
-            _navItem(1, Icons.search_rounded, Icons.search_rounded, 'Buscar'),
-            _navItem(2, Icons.favorite_border_rounded, Icons.favorite_rounded, 'Favoritos'),
-            _navItem(3, Icons.format_list_bulleted_rounded, Icons.format_list_bulleted_rounded, 'Repertórios'),
-          ]),
-        ),
-      ),
-    ),
-  );
-
-  Widget _navItem(int index, IconData normal, IconData active, String label) => Expanded(
-    child: InkWell(
-      onTap: () => setState(() {
-        selected = index;
-        if (index == 1) searchCategory = '';
-      }),
-      child: SizedBox(height: 64, child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Icon(selected == index ? active : normal, size: 21, color: selected == index ? SaintColors.gold : SaintColors.muted),
-        const SizedBox(height: 4),
-        Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: selected == index ? SaintColors.text : SaintColors.muted)),
-      ])),
-    ),
-  );
+  Widget build(BuildContext context) {
+    final palette = widget.brightness == Brightness.dark
+        ? SaintPalette.dark
+        : SaintPalette.light;
+    if (!identical(SaintColors.palette, palette)) {
+      SaintColors.use(palette);
+      // No primeiro build as telas ainda vão ser criadas já com a paleta nova.
+      if (_built) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) (context as Element).visitChildren(_rebuild);
+        });
+      }
+    }
+    _built = true;
+    return widget.child;
+  }
 }

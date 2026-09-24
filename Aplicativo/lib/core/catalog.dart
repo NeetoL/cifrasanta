@@ -1,3 +1,5 @@
+import 'moments.dart';
+
 class Song {
   const Song({
     required this.id,
@@ -5,15 +7,28 @@ class Song {
     required this.artist,
     required this.category,
     required this.originalKey,
-    this.knownWork = false,
+    required this.chart,
   });
-
   final String id;
   final String title;
   final String artist;
   final String category;
   final String originalKey;
-  final bool knownWork;
+  final String chart;
+
+  static final Expando<String> _searchKeys = Expando<String>();
+
+  /// Título, artista e categoria já normalizados, calculados uma única vez.
+  String get searchKey =>
+      _searchKeys[this] ??= Moments.normalize('$title\n$artist\n$category');
+  factory Song.fromJson(Map<String, dynamic> data) => Song(
+    id: data['id'].toString(),
+    title: data['title'] as String,
+    artist: data['artist'] as String,
+    category: data['category'] as String,
+    originalKey: data['originalKey'] as String,
+    chart: data['chart'] as String,
+  );
 }
 
 class Repertoire {
@@ -23,28 +38,44 @@ class Repertoire {
     required this.subtitle,
     required this.songIds,
   });
-
   final String id;
   final String title;
   final String subtitle;
   final List<String> songIds;
+  factory Repertoire.fromJson(Map<String, dynamic> data) => Repertoire(
+    id: data['id'].toString(),
+    title: data['title'] as String,
+    subtitle: data['subtitle'] as String,
+    songIds: List<String>.unmodifiable(
+      (data['songIds'] as List).map((id) => id.toString()),
+    ),
+  );
 }
 
 abstract final class Catalog {
-  static const songs = <Song>[
-    Song(id: 'sacramento-comunhao', title: 'Sacramento da Comunhão', artist: 'Nelsinho Corrêa', category: 'Comunhão', originalKey: 'D', knownWork: true),
-    Song(id: 'hoje-tempo-louvar', title: 'Hoje é Tempo de Louvar a Deus', artist: 'Catálogo da comunidade', category: 'Louvor', originalKey: 'G', knownWork: true),
-    Song(id: 'luz-do-caminho', title: 'Luz do Caminho', artist: 'Composição demonstrativa', category: 'Entrada', originalKey: 'C'),
-    Song(id: 'pao-da-partilha', title: 'Pão da Partilha', artist: 'Composição demonstrativa', category: 'Comunhão', originalKey: 'G'),
-    Song(id: 'voz-de-esperanca', title: 'Voz de Esperança', artist: 'Composição demonstrativa', category: 'Louvor', originalKey: 'F'),
-    Song(id: 'ao-teu-encontro', title: 'Ao Teu Encontro', artist: 'Composição demonstrativa', category: 'Envio', originalKey: 'A'),
-  ];
+  static List<Song> songs = const [];
+  static List<Repertoire> repertoires = const [];
 
-  static const repertoires = <Repertoire>[
-    Repertoire(id: 'missa-domingo', title: 'Missa de domingo', subtitle: 'Celebração dominical', songIds: ['luz-do-caminho', 'sacramento-comunhao', 'pao-da-partilha', 'ao-teu-encontro']),
-    Repertoire(id: 'grupo-oracao', title: 'Grupo de oração', subtitle: 'Encontro semanal', songIds: ['hoje-tempo-louvar', 'voz-de-esperanca', 'luz-do-caminho']),
-    Repertoire(id: 'adoracao', title: 'Noite de adoração', subtitle: 'Momento de oração', songIds: ['voz-de-esperanca', 'pao-da-partilha']),
-  ];
+  static List<String>? _extraCategories;
+
+  /// Categorias que não são momentos da celebração, calculadas uma vez por catálogo.
+  static List<String> get extraCategories => _extraCategories ??= {
+    for (final song in songs)
+      if (!Moments.all.any((moment) => Moments.matches(song.category, moment)))
+        song.category,
+  }.toList();
+
+  static void replace(Map<String, dynamic> data) {
+    _extraCategories = null;
+    final nextSongs = (data['songs'] as List)
+        .map((item) => Song.fromJson(item as Map<String, dynamic>))
+        .toList();
+    final nextRepertoires = (data['repertoires'] as List)
+        .map((item) => Repertoire.fromJson(item as Map<String, dynamic>))
+        .toList();
+    songs = List.unmodifiable(nextSongs);
+    repertoires = List.unmodifiable(nextRepertoires);
+  }
 
   static Song? song(String id) {
     for (final item in songs) {

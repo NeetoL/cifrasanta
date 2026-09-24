@@ -1,0 +1,148 @@
+{
+  "categories": [
+    {
+      "id": "tradicionais",
+      "title": "Orações tradicionais",
+      "description": "As orações que toda a Igreja reza.",
+      "prayers": [
+        {
+          "id": "sinal-da-cruz",
+          "title": "Sinal da Cruz",
+          "text": "Pelo sinal da Santa Cruz, livrai-nos, Deus, Nosso Senhor, dos nossos inimigos.\nEm nome do Pai, do Filho e do Espírito Santo.\nAmém."
+        },
+        {
+          "id": "pai-nosso",
+          "title": "Pai Nosso",
+          "reference": "Mt 6,9-13",
+          "text": "Pai nosso que estais nos céus,\nsantificado seja o vosso nome,\nvenha a nós o vosso reino,\nseja feita a vossa vontade\nassim na terra como no céu.\n\nO pão nosso de cada dia nos dai hoje,\nperdoai-nos as nossas ofensas\nassim como nós perdoamos a quem nos tem ofendido,\ne não nos deixeis cair em tentação,\nmas livrai-nos do mal.\n\nAmém."
+        },
+        {
+          "id": "ave-maria",
+          "title": "Ave Maria",
+          "reference": "Lc 1,28.42",
+          "text": "Ave, Maria, cheia de graça,\no Senhor é convosco,\nbendita sois vós entre as mulheres\ne bendito é o fruto do vosso ventre, Jesus.\n\nSanta Maria, Mãe de Deus,\nrogai por nós, pecadores,\nagora e na hora de nossa morte.\n\nAmém."
+        },
+        {
+          "id": "gloria",
+          "title": "Glória ao Pai",
+          "text": "Glória ao Pai e ao Filho e ao Espírito Santo,\ncomo era no princípio, agora e sempre.\nAmém."
+        },
+        {
+          "id": "credo",
+          "title": "Credo (Símbolo dos Apóstolos)",
+          "text": "Creio em Deus Pai todo-poderoso, criador do céu e da terra;\ne em Jesus Cristo, seu único Filho, nosso Senhor,\nque foi concebido pelo poder do Espírito Santo,\nnasceu da Virgem Maria,\npadeceu sob Pôncio Pilatos,\nfoi crucificado, morto e sepultado,\ndesceu à mansão dos mortos,\nressuscitou ao terceiro dia,\nsubiu aos céus,\nestá sentado à direita de Deus Pai todo-poderoso,\ndonde há de vir a julgar os vivos e os mortos.\n\nCreio no Espírito Santo,\nna santa Igreja Católica,\nna comunhão dos santos,\nna remissão dos pecados,\nna ressurreição da carne,\nna vida eterna.\n\nAmém."
+        },
+        {
+          "id": "o-meu-jesus",
+          "title": "Ó meu Jesus",
+          "text": "Ó meu Jesus, perdoai-nos, livrai-nos do fogo do inferno,\nlevai as almas todas para o céu,\nprincipalmente as que mais precisarem da vossa misericórdia."
+        }
+      ]
+    },
+    {
+      "id": "dia-a-dia",
+      "title": "Orações do dia a dia",
+      "description": "Para começar, partilhar e encerrar o dia com Deus.",
+      "prayers": [
+        {
+          "id": "oracao-da-manha",
+          "title": "Oração da manhã",
+          "subtitle": "Oferecimento do dia",
+          "text": "Ó Jesus, por meio do Imaculado Coração de Maria,\neu vos ofereço as orações, obras, alegrias e sofrimentos deste dia,\nem reparação dos pecados\ne por todas as intenções pelas quais vós mesmo vos ofereceis\ncontinuamente no Santo Sacrifício do Altar.\nAmém."
+        },
+        {
+          "id": "oracao-da-noite",
+          "title": "Oração da noite",
+          "subtitle": "Ato de contrição",
+          "text": "Senhor meu Jesus Cristo, Deus e homem verdadeiro,\nCriador e Redentor meu,\npor serdes vós quem sois, sumamente bom e digno de ser amado sobre todas as coisas,\ne porque vos amo e estimo,\npesa-me, Senhor, de todo o coração de vos ter ofendido;\nproponho firmemente emendar-me e nunca mais vos tornar a ofender.\nPeço e espero o perdão das minhas culpas,\npela vossa infinita misericórdia.\nAmém."
+        },
+        {
+          "id": "antes-das-refeicoes",
+          "title": "Antes das refeições",
+          "text": "Abençoai-nos, Senhor,\na nós e a estes dons que vamos receber da vossa bondade.\nPor Cristo, nosso Senhor.\nAmém."
+        },
+        {
+          "id": "depois-das-refeicoes",
+          "title": "Depois das refeições",
+          "text": "Graças vos damos, Senhor,\npor todos os vossos benefícios,\nvós que viveis e reinais pelos séculos dos séculos.\nAmém."
+        }
+      ]
+    },
+    {
+      "id": "marianas",
+      "title": "Orações marianas",
+      "description": "Para rezar com Maria, Mãe da Igreja.",
+      "prayers": [
+        {
+          "id": "salve-rainha",
+          "title": "Salve Rainha",
+          "text": "Salve, Rainha, Mãe de misericórdia,\nvida, doçura e esperança nossa, salve!\n\nA vós bradamos, os degredados filhos de Eva;\na vós suspiramos, gemendo e chorando neste vale de lágrimas.\n\nEia, pois, advogada nossa,\nesses vossos olhos misericordiosos a nós volvei;\ne depois deste desterro, mostrai-nos Jesus,\nbendito fruto do vosso ventre,\nó clemente, ó piedosa, ó doce sempre Virgem Maria.\n\nRogai por nós, santa Mãe de Deus,\npara que sejamos dignos das promessas de Cristo.\nAmém."
+        },
+        {
+          "id": "lembrai-vos",
+          "title": "Lembrai-vos",
+          "text": "Lembrai-vos, ó piíssima Virgem Maria,\nque nunca se ouviu dizer que algum daqueles\nque tenham recorrido à vossa proteção,\nimplorado a vossa assistência\ne reclamado o vosso socorro,\nfosse por vós desamparado.\n\nAnimado eu, pois, de igual confiança,\na vós, Virgem entre todas singular, como a Mãe recorro,\nde vós me valho e, gemendo sob o peso dos meus pecados,\nme prostro a vossos pés.\n\nNão rejeiteis as minhas súplicas,\nó Mãe do Verbo de Deus humanado,\nmas dignai-vos de as ouvir propícia\ne de me alcançar o que vos rogo.\nAmém."
+        },
+        {
+          "id": "angelus",
+          "title": "Ângelus",
+          "text": "V. O anjo do Senhor anunciou a Maria.\nR. E ela concebeu do Espírito Santo.\n(Ave, Maria…)\n\nV. Eis aqui a serva do Senhor.\nR. Faça-se em mim segundo a vossa palavra.\n(Ave, Maria…)\n\nV. E o Verbo se fez carne.\nR. E habitou entre nós.\n(Ave, Maria…)\n\nV. Rogai por nós, santa Mãe de Deus.\nR. Para que sejamos dignos das promessas de Cristo.\n\nOremos:\nInfundi, Senhor, a vossa graça em nossas almas,\npara que nós, que pela anunciação do anjo\nconhecemos a encarnação de Cristo, vosso Filho,\npela sua paixão e cruz\nsejamos conduzidos à glória da ressurreição.\nPor Cristo, nosso Senhor.\nAmém."
+        }
+      ]
+    },
+    {
+      "id": "aos-santos",
+      "title": "Orações aos santos",
+      "description": "Pedindo a intercessão dos amigos de Deus.",
+      "prayers": [
+        {
+          "id": "santo-anjo",
+          "title": "Santo Anjo do Senhor",
+          "text": "Santo Anjo do Senhor,\nmeu zeloso guardador,\nse a ti me confiou a piedade divina,\nsempre me rege, me guarda, me governa e me ilumina.\nAmém."
+        },
+        {
+          "id": "sao-miguel",
+          "title": "São Miguel Arcanjo",
+          "text": "São Miguel Arcanjo, defendei-nos no combate,\nsede o nosso refúgio contra as maldades e ciladas do demônio.\nOrdene-lhe Deus, instantemente o pedimos,\ne vós, príncipe da milícia celeste,\npelo poder divino, precipitai no inferno a satanás\ne a todos os espíritos malignos\nque andam pelo mundo para perder as almas.\nAmém."
+        },
+        {
+          "id": "sao-francisco",
+          "title": "Oração da Paz",
+          "subtitle": "Atribuída a São Francisco de Assis",
+          "text": "Senhor, fazei-me instrumento de vossa paz.\nOnde houver ódio, que eu leve o amor;\nonde houver ofensa, que eu leve o perdão;\nonde houver discórdia, que eu leve a união;\nonde houver dúvidas, que eu leve a fé;\nonde houver erro, que eu leve a verdade;\nonde houver desespero, que eu leve a esperança;\nonde houver tristeza, que eu leve a alegria;\nonde houver trevas, que eu leve a luz.\n\nÓ Mestre, fazei que eu procure mais\nconsolar que ser consolado;\ncompreender que ser compreendido;\namar que ser amado.\n\nPois é dando que se recebe,\né perdoando que se é perdoado\ne é morrendo que se ressuscita para a vida eterna.\nAmém."
+        }
+      ]
+    },
+    {
+      "id": "momentos",
+      "title": "Para momentos específicos",
+      "description": "Orações para invocar o Espírito Santo e rezar pelos que partiram.",
+      "prayers": [
+        {
+          "id": "espirito-santo",
+          "title": "Vinde, Espírito Santo",
+          "subtitle": "Antes de decidir, estudar ou celebrar",
+          "text": "Vinde, Espírito Santo,\nenchei os corações dos vossos fiéis\ne acendei neles o fogo do vosso amor.\n\nEnviai o vosso Espírito e tudo será criado.\nE renovareis a face da terra.\n\nOremos:\nÓ Deus, que instruístes os corações dos vossos fiéis\ncom a luz do Espírito Santo,\nconcedei-nos que, guiados pelo mesmo Espírito,\nsaboreemos o bem e gozemos sempre de sua consolação.\nPor Cristo, nosso Senhor.\nAmém."
+        },
+        {
+          "id": "fieis-defuntos",
+          "title": "Pelos fiéis defuntos",
+          "text": "Dai-lhes, Senhor, o repouso eterno,\ne brilhe para eles a luz perpétua.\nDescansem em paz.\nAmém."
+        }
+      ]
+    },
+    {
+      "id": "ladainhas",
+      "title": "Ladainhas",
+      "description": "Orações de súplica em forma de invocações.",
+      "prayers": [
+        {
+          "id": "ladainha-nossa-senhora",
+          "title": "Ladainha de Nossa Senhora",
+          "subtitle": "Ladainha lauretana",
+          "text": "Senhor, tende piedade de nós.\nCristo, tende piedade de nós.\nSenhor, tende piedade de nós.\nCristo, ouvi-nos.\nCristo, atendei-nos.\n\nDeus, Pai do céu, tende piedade de nós.\nDeus Filho, Redentor do mundo, tende piedade de nós.\nDeus Espírito Santo, tende piedade de nós.\nSantíssima Trindade, um só Deus, tende piedade de nós.\n\nSanta Maria, rogai por nós.\nSanta Mãe de Deus, rogai por nós.\nSanta Virgem das virgens, rogai por nós.\nMãe de Cristo, rogai por nós.\nMãe da Igreja, rogai por nós.\nMãe da misericórdia, rogai por nós.\nMãe da divina graça, rogai por nós.\nMãe da esperança, rogai por nós.\nMãe puríssima, rogai por nós.\nMãe castíssima, rogai por nós.\nMãe sempre virgem, rogai por nós.\nMãe imaculada, rogai por nós.\nMãe digna de amor, rogai por nós.\nMãe admirável, rogai por nós.\nMãe do bom conselho, rogai por nós.\nMãe do Criador, rogai por nós.\nMãe do Salvador, rogai por nós.\nVirgem prudentíssima, rogai por nós.\nVirgem digna de veneração, rogai por nós.\nVirgem digna de louvor, rogai por nós.\nVirgem poderosa, rogai por nós.\nVirgem clemente, rogai por nós.\nVirgem fiel, rogai por nós.\nEspelho de justiça, rogai por nós.\nSede da sabedoria, rogai por nós.\nCausa da nossa alegria, rogai por nós.\nVaso espiritual, rogai por nós.\nVaso honorífico, rogai por nós.\nVaso insigne de devoção, rogai por nós.\nRosa mística, rogai por nós.\nTorre de Davi, rogai por nós.\nTorre de marfim, rogai por nós.\nCasa de ouro, rogai por nós.\nArca da aliança, rogai por nós.\nPorta do céu, rogai por nós.\nEstrela da manhã, rogai por nós.\nSaúde dos enfermos, rogai por nós.\nRefúgio dos pecadores, rogai por nós.\nConsoladora dos aflitos, rogai por nós.\nAuxílio dos cristãos, rogai por nós.\nRainha dos Anjos, rogai por nós.\nRainha dos Patriarcas, rogai por nós.\nRainha dos Profetas, rogai por nós.\nRainha dos Apóstolos, rogai por nós.\nRainha dos Mártires, rogai por nós.\nRainha dos Confessores, rogai por nós.\nRainha das Virgens, rogai por nós.\nRainha de todos os Santos, rogai por nós.\nRainha concebida sem pecado original, rogai por nós.\nRainha elevada ao céu, rogai por nós.\nRainha do Santo Rosário, rogai por nós.\nRainha da família, rogai por nós.\nRainha da paz, rogai por nós.\n\nCordeiro de Deus, que tirais os pecados do mundo, perdoai-nos, Senhor.\nCordeiro de Deus, que tirais os pecados do mundo, ouvi-nos, Senhor.\nCordeiro de Deus, que tirais os pecados do mundo, tende piedade de nós.\n\nV. Rogai por nós, santa Mãe de Deus.\nR. Para que sejamos dignos das promessas de Cristo.\n\nOremos:\nSenhor Deus, concedei-nos, a nós vossos servos,\ngozar de perene saúde de alma e corpo\ne, pela gloriosa intercessão da bem-aventurada sempre Virgem Maria,\nlivrai-nos das tristezas presentes\ne dai-nos a alegria eterna.\nPor Cristo, nosso Senhor.\nAmém."
+        }
+      ]
+    }
+  ]
+}
